@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Brother Retro Photo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f2f2f2;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
+header{padding:20px 24px;background:#111;color:#fff}
+h1{margin:0;font-size:22px} header p{margin:5px 0 0;color:#aaa;font-size:13px}
+.app{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-columns:310px 1fr;gap:20px}
+.panel,.preview{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px #0001}
+.drop{border:2px dashed #aaa;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px}
+.file-label{display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px 16px;border-radius:10px;background:#111;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+#file{position:absolute;width:1px;height:1px;opacity:0}
+.drop-hint{font-size:12px;color:#777;margin-top:9px}
+label.control{font-size:13px;font-weight:600;display:block;margin:13px 0 5px}
+select,input[type=range]{width:100%}
+select{padding:9px;border:1px solid #bbb;border-radius:7px;background:#fff;font-size:15px}
+.val{float:right;color:#666;font-weight:400}
+button{border:0;border-radius:8px;padding:11px 14px;font-size:14px;cursor:pointer}
+.primary{background:#111;color:#fff;width:100%;margin-top:16px}.secondary{background:#e7e7e7;width:100%;margin-top:8px}
+.preview{min-height:70vh;display:flex;align-items:center;justify-content:center;overflow:auto}
+canvas{max-width:100%;max-height:78vh;display:block;background:#eee}
+.empty{color:#888;text-align:center}
+.status{font-size:12px;color:#666;margin-top:10px;min-height:16px}
+.info{font-size:12px;color:#666;line-height:1.4;margin-top:12px}
+@media(max-width:800px){.app{grid-template-columns:1fr;padding:12px}.preview{min-height:50vh}header{padding:18px}}
+@media print{
+  @page{size:62mm auto;margin:0}
+  html,body{margin:0!important;padding:0!important;background:#fff}
+  header,.panel,.empty{display:none!important}
+  .app{display:block;padding:0;margin:0}
+  .preview{display:block;min-height:0;padding:0;margin:0;box-shadow:none;border-radius:0}
+  canvas{width:62mm;height:auto;max-width:none;max-height:none;margin:0;display:block}
+}
+</style>
+</head>
+<body>
+<header><h1>Brother Retro Photo</h1><p>Photo → Game Boy / retro / thermal-printer dithering</p></header>
+<div class="app">
+<div class="panel">
+<div class="drop">
+<label for="file" class="file-label">📷 Додати фото</label>
+<input id="file" type="file" accept="image/*">
+<div class="drop-hint">Фото з галереї або Файлів</div>
+<div id="status" class="status"></div>
+</div>
+
+<label class="control">Preset</label>
+<select id="preset">
+<option value="gameboy">GAME BOY</option>
+<option value="gameboyHigh">GAME BOY — HIGH CONTRAST</option>
+<option value="retro">RETRO CAMERA</option>
+<option value="thermal">BROTHER THERMAL</option>
+<option value="custom">CUSTOM</option>
+</select>
+
+<label class="control">Crop</label>
+<select id="crop">
+<option value="original">Original</option>
+<option value="1:1">1 : 1</option>
+<option value="4:3">4 : 3</option>
+<option value="3:2">3 : 2</option>
+<option value="16:9">16 : 9</option>
+<option value="gb">GAME BOY 4 : 3</option>
+</select>
+
+<label class="control">Contrast <span class="val" id="cv">20</span></label>
+<input id="contrast" type="range" min="-50" max="100" value="20">
+<label class="control">Brightness <span class="val" id="bv">0</span></label>
+<input id="brightness" type="range" min="-50" max="50" value="0">
+<label class="control">Detail / Sharpness <span class="val" id="sv">10</span></label>
+<input id="sharp" type="range" min="0" max="100" value="10">
+<label class="control">Dither strength <span class="val" id="dv">100</span></label>
+<input id="dither" type="range" min="0" max="100" value="100">
+<label class="control">Pixel size <span class="val" id="pv">2</span></label>
+<input id="pixel" type="range" min="1" max="6" value="2">
+
+<label class="control">Algorithm</label>
+<select id="algo">
+<option value="atkinson">Atkinson</option>
+<option value="floyd">Floyd–Steinberg</option>
+<option value="bayer">Bayer 4×4</option>
+<option value="none">No dithering</option>
+</select>
+
+<button class="primary" id="print">Print</button>
+<button class="primary" id="save">Save PNG</button>
+<button class="secondary" id="reset">Reset preset</button>
+<div class="info">Для ретро-ефекту спробуй GAME BOY + Atkinson.</div>
+</div>
+<div class="preview"><div id="empty" class="empty">Завантаж фото для preview</div><canvas id="canvas" hidden></canvas></div>
+</div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id), F=$('file'), C=$('canvas'), X=C.getContext('2d',{willReadFrequently:true});
+let src=null;
+
+const P={
+ gameboy:{c:20,b:0,s:10,d:100,p:2,a:'atkinson'},
+ gameboyHigh:{c:55,b:-3,s:15,d:100,p:2,a:'floyd'},
+ retro:{c:25,b:0,s:25,d:85,p:1,a:'atkinson'},
+ thermal:{c:35,b:0,s:35,d:100,p:1,a:'floyd'}
+};
+
+function labels(){
+ $('cv').textContent=$('contrast').value;$('bv').textContent=$('brightness').value;
+ $('sv').textContent=$('sharp').value;$('dv').textContent=$('dither').value;$('pv').textContent=$('pixel').value;
+}
+function status(t){$('status').textContent=t||''}
+function clamp(v){return Math.max(0,Math.min(255,v))}
+function gray(r,g,b){return .299*r+.587*g+.114*b}
+
+['contrast','brightness','sharp','dither','pixel'].forEach(id=>$(id).addEventListener('input',()=>{$('preset').value='custom';labels();render()}));
+$('algo').addEventListener('change',render);
+$('crop').addEventListener('change',render);
+
+$('preset').addEventListener('change',()=>{
+ const p=P[$('preset').value];
+ if(p){$('contrast').value=p.c;$('brightness').value=p.b;$('sharp').value=p.s;$('dither').value=p.d;$('pixel').value=p.p;$('algo').value=p.a;labels()}
+ render();
+});
+
+F.addEventListener('change',e=>{
+ const f=e.target.files&&e.target.files[0]; if(!f)return;
+ if(!f.type.startsWith('image/')){status('Потрібно вибрати зображення.');return}
+ status('Завантаження…');
+ const r=new FileReader();
+ r.onload=()=>{
+  const im=new Image();
+  im.onload=()=>{src=im;$('empty').hidden=true;C.hidden=false;status('Фото завантажено ✓');render()};
+  im.onerror=()=>status('Не вдалося відкрити фото.');
+  im.src=r.result;
+ };
+ r.onerror=()=>status('Не вдалося прочитати файл.');
+ r.readAsDataURL(f);
+});
+
+function sharpen(a,w,h,q){
+ if(!q)return;const s=new Uint8ClampedArray(a),k=q/100;
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const i=(y*w+x)*4, center=gray(s[i],s[i+1],s[i+2]);
+  const avg=(gray(s[i-4],s[i-3],s[i-2])+gray(s[i+4],s[i+5],s[i+6])+gray(s[i-w*4],s[i-w*4+1],s[i-w*4+2])+gray(s[i+w*4],s[i+w*4+1],s[i+w*4+2]))/4;
+  const v=clamp(center+(center-avg)*k*2);a[i]=a[i+1]=a[i+2]=v;
+ }
+}
+function floyd(a,w,h,s){
+ s/=100;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,o=a[i],n=o<128?0:255,e=(o-n)*s;a[i]=n;
+  if(x+1<w)a[i+1]+=e*7/16;if(x&&y+1<h)a[i+w-1]+=e*3/16;if(y+1<h)a[i+w]+=e*5/16;if(x+1<w&&y+1<h)a[i+w+1]+=e/16;
+ }
+}
+function atkinson(a,w,h,s){
+ s/=100;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,o=a[i],n=o<128?0:255,e=(o-n)*s/8;a[i]=n;
+  for(const [dx,dy] of [[1,0],[2,0],[-1,1],[0,1],[1,1],[0,2]]){const xx=x+dx,yy=y+dy;if(xx>=0&&xx<w&&yy>=0&&yy<h)a[yy*w+xx]+=e}
+ }
+}
+function bayer(a,w,h,s){
+ const m=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];s/=100;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const t=(m[y%4][x%4]+.5)*16;a[y*w+x]=a[y*w+x]<128+(t-128)*s?0:255}
+}
+
+function render(){
+ if(!src)return;
+ const crop=$('crop').value;
+ let ratio;
+ if(crop==='1:1')ratio=1;else if(crop==='4:3'||crop==='gb')ratio=4/3;else if(crop==='3:2')ratio=3/2;else if(crop==='16:9')ratio=16/9;else ratio=src.width/src.height;
+
+ let sx=0,sy=0,sw=src.width,sh=src.height;
+ if(crop!=='original'){
+  const sr=src.width/src.height;
+  if(sr>ratio){sw=Math.round(src.height*ratio);sx=Math.round((src.width-sw)/2)}
+  else{sh=Math.round(src.width/ratio);sy=Math.round((src.height-sh)/2)}
+ }
+ const max=900;let w=Math.min(max,sw),h=Math.round(w/ratio);
+ const px=+$('pixel').value;w=Math.max(1,Math.floor(w/px)*px);h=Math.max(1,Math.floor(h/px)*px);
+
+ const t=document.createElement('canvas');t.width=w;t.height=h;
+ const z=t.getContext('2d',{willReadFrequently:true});z.imageSmoothingEnabled=true;
+ z.drawImage(src,sx,sy,sw,sh,0,0,w,h);
+ const im=z.getImageData(0,0,w,h),d=im.data,c=+$('contrast').value,b=+$('brightness').value;
+ const f=(259*(c+255))/(255*(259-c));
+ for(let i=0;i<d.length;i+=4){let v=f*(gray(d[i],d[i+1],d[i+2])-128)+128+b*2.55;v=clamp(v);d[i]=d[i+1]=d[i+2]=v}
+ sharpen(d,w,h,+$('sharp').value);z.putImageData(im,0,0);
+
+ const a=new Float32Array(w*h);for(let i=0;i<w*h;i++)a[i]=d[i*4];
+ const q=+$('dither').value,alg=$('algo').value;
+ if(alg==='floyd')floyd(a,w,h,q);else if(alg==='atkinson')atkinson(a,w,h,q);else if(alg==='bayer')bayer(a,w,h,q);
+
+ C.width=w;C.height=h;const out=X.createImageData(w,h);
+ for(let i=0;i<w*h;i++){const v=a[i]<128?0:255;out.data[i*4]=v;out.data[i*4+1]=v;out.data[i*4+2]=v;out.data[i*4+3]=255}
+ X.putImageData(out,0,0);
+}
+
+$('print').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}window.print()});
+
+$('save').addEventListener('click',()=>{
+ if(!src){alert('Спочатку завантаж фото.');return}
+ C.toBlob(blob=>{
+  if(!blob){alert('Не вдалося створити PNG.');return}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='brother-retro-photo.png';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);status('PNG готовий ✓');
+ },'image/png');
+});
+
+$('reset').addEventListener('click',()=>{
+ $('preset').value='gameboy';const p=P.gameboy;
+ $('contrast').value=p.c;$('brightness').value=p.b;$('sharp').value=p.s;$('dither').value=p.d;$('pixel').value=p.p;$('algo').value=p.a;
+ labels();render();
+});
+labels();
+</script>
+</body>
+</html>
