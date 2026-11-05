@@ -3,217 +3,532 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Brother Retro Photo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Brother Print">
+<meta name="theme-color" content="#111111">
+<title>Brother Print Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=Roboto+Condensed:wght@500;700;900&family=Montserrat:wght@600;800&family=Rubik:wght@500;700;900&family=Oswald:wght@500;700&family=Unbounded:wght@600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f2f2f2;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
-header{padding:20px 24px;background:#111;color:#fff}
-h1{margin:0;font-size:22px} header p{margin:5px 0 0;color:#aaa;font-size:13px}
-.app{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-columns:310px 1fr;gap:20px}
-.panel,.preview{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px #0001}
-.drop{border:2px dashed #aaa;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px}
+body{margin:0;background:#f2f2f2;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+header{padding:calc(14px + env(safe-area-inset-top)) 20px 0;background:#111;color:#fff}
+h1{margin:0;font-size:20px}
+.tabs{display:flex;gap:6px;margin-top:12px}
+.tab{flex:1;background:#2a2a2a;color:#bbb;border:0;border-radius:10px 10px 0 0;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
+.tab.on{background:#f2f2f2;color:#111}
+.app{max-width:1200px;margin:auto;padding:16px;display:grid;grid-template-columns:340px 1fr;gap:16px}
+.mode[hidden]{display:none!important}
+.panel,.preview{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px #0001}
+.drop{border:2px dashed #aaa;border-radius:12px;padding:16px;text-align:center;margin-bottom:8px}
 .file-label{display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px 16px;border-radius:10px;background:#111;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
-#file{position:absolute;width:1px;height:1px;opacity:0}
-.drop-hint{font-size:12px;color:#777;margin-top:9px}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.hint{font-size:12px;color:#777;margin-top:8px;line-height:1.4}
 label.control{font-size:13px;font-weight:600;display:block;margin:13px 0 5px}
-select,input[type=range]{width:100%}
-select{padding:9px;border:1px solid #bbb;border-radius:7px;background:#fff;font-size:15px}
+select,input[type=range],input[type=text],textarea{width:100%}
+select,input[type=text],textarea{padding:9px;border:1px solid #bbb;border-radius:8px;background:#fff;font-size:16px;font-family:inherit}
+textarea{resize:vertical;min-height:44px}
 .val{float:right;color:#666;font-weight:400}
-button{border:0;border-radius:8px;padding:11px 14px;font-size:14px;cursor:pointer}
-.primary{background:#111;color:#fff;width:100%;margin-top:16px}.secondary{background:#e7e7e7;width:100%;margin-top:8px}
-.preview{min-height:70vh;display:flex;align-items:center;justify-content:center;overflow:auto}
-canvas{max-width:100%;max-height:78vh;display:block;background:#eee}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px}
+.check input{width:20px;height:20px}
+button{border:0;border-radius:8px;padding:12px 14px;font-size:15px;cursor:pointer;font-weight:600}
+.primary{background:#111;color:#fff;width:100%;margin-top:14px}.secondary{background:#e7e7e7;width:100%;margin-top:8px}
+.preview{min-height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:auto;position:sticky;top:8px;align-self:start}
+canvas{max-width:100%;max-height:60vh;display:block;background:#fff;image-rendering:pixelated;box-shadow:0 0 0 1px #ddd}
 .empty{color:#888;text-align:center}
-.status{font-size:12px;color:#666;margin-top:10px;min-height:16px}
-.info{font-size:12px;color:#666;line-height:1.4;margin-top:12px}
-@media(max-width:800px){.app{grid-template-columns:1fr;padding:12px}.preview{min-height:50vh}header{padding:18px}}
+.status{font-size:12px;color:#666;margin-top:8px;min-height:16px}
+.meta{font-size:12px;color:#888}
+.section{font-size:11px;font-weight:800;letter-spacing:.08em;color:#999;text-transform:uppercase;margin:20px 0 0;border-top:1px solid #eee;padding-top:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#eee;border-radius:20px;padding:7px 12px;font-size:13px;font-weight:600}
+.chip.on{background:#111;color:#fff}
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px;margin-top:10px;max-height:260px;overflow:auto;padding:2px}
+.ic{aspect-ratio:1;background:#f6f6f6;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:8px;cursor:pointer;border:2px solid transparent}
+.ic img{width:100%;height:100%;object-fit:contain}
+.ic.on{border-color:#111;background:#fff}
+.current{display:flex;align-items:center;gap:10px;font-size:13px;color:#555;margin-top:8px}
+.current .ic{width:44px;flex:none;cursor:default}
+@media(max-width:800px){.app{grid-template-columns:1fr;padding:10px}.preview{order:-1;min-height:0;z-index:2}canvas{max-height:34vh}}
+#printArea{display:none}
 @media print{
-  @page{size:62mm auto;margin:0}
   html,body{margin:0!important;padding:0!important;background:#fff}
-  header,.panel,.empty{display:none!important}
-  .app{display:block;padding:0;margin:0}
-  .preview{display:block;min-height:0;padding:0;margin:0;box-shadow:none;border-radius:0}
-  canvas{width:62mm;height:auto;max-width:none;max-height:none;margin:0;display:block}
+  header,.app{display:none!important}
+  #printArea{display:block}
+  #printArea img{display:block;width:100%;height:auto;image-rendering:pixelated}
 }
 </style>
+<style id="pageStyle"></style>
 </head>
 <body>
-<header><h1>Brother Retro Photo</h1><p>Photo → Game Boy / retro / thermal-printer dithering</p></header>
-<div class="app">
+<header>
+ <h1>Brother Print Studio</h1>
+ <div class="tabs">
+  <button class="tab on" data-mode="photo">📷 Ретро фото</button>
+  <button class="tab" data-mode="sticker">🏷 Стікери</button>
+ </div>
+</header>
+
+<!-- ===================== PHOTO MODE ===================== -->
+<div class="app mode" id="mode-photo">
 <div class="panel">
-<div class="drop">
-<label for="file" class="file-label">📷 Додати фото</label>
-<input id="file" type="file" accept="image/*">
-<div class="drop-hint">Фото з галереї або Файлів</div>
-<div id="status" class="status"></div>
+ <div class="drop">
+  <label for="file" class="file-label">📷 Додати фото</label>
+  <input id="file" type="file" accept="image/*">
+  <div class="hint">Фото з галереї або Файлів</div>
+  <div id="status" class="status"></div>
+ </div>
+
+ <div class="row">
+  <div><label class="control">Стрічка</label><select id="pTape"></select></div>
+  <div><label class="control">Crop</label>
+   <select id="crop">
+    <option value="original">Original</option><option value="1:1">1 : 1</option><option value="4:3">4 : 3</option>
+    <option value="3:2">3 : 2</option><option value="16:9">16 : 9</option><option value="gb">GAME BOY 4 : 3</option>
+   </select></div>
+ </div>
+ <label class="check"><input type="checkbox" id="rotate"> Повернути на 90° (широке фото вздовж стрічки)</label>
+
+ <label class="control">Preset</label>
+ <select id="preset">
+  <option value="gameboy">GAME BOY</option><option value="gameboyHigh">GAME BOY — HIGH CONTRAST</option>
+  <option value="retro">RETRO CAMERA</option><option value="thermal">BROTHER THERMAL</option><option value="custom">CUSTOM</option>
+ </select>
+
+ <label class="control">Contrast <span class="val" id="cv"></span></label>
+ <input id="contrast" type="range" min="-50" max="100">
+ <label class="control">Brightness <span class="val" id="bv"></span></label>
+ <input id="brightness" type="range" min="-50" max="50">
+ <label class="control">Компенсація темноти друку <span class="val" id="gv"></span></label>
+ <input id="gamma" type="range" min="0" max="60">
+ <label class="control">Detail / Sharpness <span class="val" id="sv"></span></label>
+ <input id="sharp" type="range" min="0" max="100">
+ <label class="control">Dither strength <span class="val" id="dv"></span></label>
+ <input id="dither" type="range" min="0" max="100">
+ <label class="control">Pixel size <span class="val" id="pv"></span></label>
+ <input id="pixel" type="range" min="1" max="6">
+ <label class="control">Algorithm</label>
+ <select id="algo">
+  <option value="atkinson">Atkinson</option><option value="floyd">Floyd–Steinberg</option>
+  <option value="bayer">Bayer 4×4</option><option value="none">No dithering</option>
+ </select>
+
+ <button class="primary" id="pPrint">Print</button>
+ <button class="primary" id="pSave">Зберегти / Поділитися PNG</button>
+ <button class="secondary" id="reset">Reset preset</button>
+ <div class="hint">Для ретро-ефекту спробуй GAME BOY + Atkinson. «Поділитися» дозволяє відправити PNG одразу в iPrint&Label.</div>
+</div>
+<div class="preview"><div id="pEmpty" class="empty">Завантаж фото для preview</div><canvas id="pCanvas" hidden></canvas><div class="meta" id="pMeta"></div></div>
 </div>
 
-<label class="control">Preset</label>
-<select id="preset">
-<option value="gameboy">GAME BOY</option>
-<option value="gameboyHigh">GAME BOY — HIGH CONTRAST</option>
-<option value="retro">RETRO CAMERA</option>
-<option value="thermal">BROTHER THERMAL</option>
-<option value="custom">CUSTOM</option>
-</select>
+<!-- ===================== STICKER MODE ===================== -->
+<div class="app mode" id="mode-sticker" hidden>
+<div class="panel">
+ <div class="row">
+  <div><label class="control">Стрічка / етикетка</label><select id="sTape"></select></div>
+  <div><label class="control">Орієнтація</label>
+   <select id="sOrient"><option value="along">Вздовж стрічки</option><option value="across">Поперек</option></select></div>
+ </div>
+ <div id="lenWrap">
+  <label class="control">Довжина <span class="val" id="lenV"></span></label>
+  <input id="sLen" type="range" min="15" max="200" step="1">
+ </div>
 
-<label class="control">Crop</label>
-<select id="crop">
-<option value="original">Original</option>
-<option value="1:1">1 : 1</option>
-<option value="4:3">4 : 3</option>
-<option value="3:2">3 : 2</option>
-<option value="16:9">16 : 9</option>
-<option value="gb">GAME BOY 4 : 3</option>
-</select>
+ <div class="section">Текст</div>
+ <label class="control">Заголовок</label>
+ <textarea id="sTitle" rows="2" placeholder="Напр.: ДИСПЛЕЇ iPhone"></textarea>
+ <label class="control">Підпис (необовʼязково)</label>
+ <textarea id="sSub" rows="2" placeholder="Напр.: 11 / 12 / 13 серія"></textarea>
+ <div class="row">
+  <div><label class="control">Шрифт</label><select id="sFont">
+   <option value="Inter">Inter</option><option value="Roboto Condensed">Roboto Condensed</option>
+   <option value="Montserrat">Montserrat</option><option value="Rubik">Rubik</option>
+   <option value="Oswald">Oswald (вузький)</option><option value="Unbounded">Unbounded</option>
+   <option value="JetBrains Mono">JetBrains Mono</option></select></div>
+  <div><label class="control">Вирівнювання</label><select id="sAlign">
+   <option value="left">Ліворуч</option><option value="center">По центру</option></select></div>
+ </div>
 
-<label class="control">Contrast <span class="val" id="cv">20</span></label>
-<input id="contrast" type="range" min="-50" max="100" value="20">
-<label class="control">Brightness <span class="val" id="bv">0</span></label>
-<input id="brightness" type="range" min="-50" max="50" value="0">
-<label class="control">Detail / Sharpness <span class="val" id="sv">10</span></label>
-<input id="sharp" type="range" min="0" max="100" value="10">
-<label class="control">Dither strength <span class="val" id="dv">100</span></label>
-<input id="dither" type="range" min="0" max="100" value="100">
-<label class="control">Pixel size <span class="val" id="pv">2</span></label>
-<input id="pixel" type="range" min="1" max="6" value="2">
+ <div class="section">Іконка</div>
+ <div class="row">
+  <div><label class="control">Макет</label><select id="sLayout">
+   <option value="left">Іконка ліворуч</option><option value="top">Іконка зверху</option>
+   <option value="text">Тільки текст</option><option value="icon">Тільки іконка</option></select></div>
+  <div><label class="control">Розмір іконки <span class="val" id="icV"></span></label>
+   <input id="sIconScale" type="range" min="40" max="100" style="margin-top:12px"></div>
+ </div>
+ <div class="current"><div class="ic" id="curIc"></div><span id="curName">Іконку не вибрано</span></div>
+ <div class="chips" id="cats"></div>
+ <div class="row" style="margin-top:8px">
+  <input type="text" id="sSearch" placeholder="Пошук англійською: battery, screw…" enterkeyhint="search">
+ </div>
+ <div class="icons" id="iconGrid"></div>
+ <div class="hint" id="iconHint">Понад 200 000 іконок і логотипів брендів з бібліотеки Iconify. Пошук працює англійською.</div>
 
-<label class="control">Algorithm</label>
-<select id="algo">
-<option value="atkinson">Atkinson</option>
-<option value="floyd">Floyd–Steinberg</option>
-<option value="bayer">Bayer 4×4</option>
-<option value="none">No dithering</option>
-</select>
+ <div class="section">Оформлення</div>
+ <div class="row">
+  <div><label class="control">Рамка</label><select id="sFrame">
+   <option value="none">Без рамки</option><option value="thin">Тонка</option><option value="thick">Товста</option><option value="round">Заокруглена</option></select></div>
+  <div><label class="control">QR-код</label><select id="sQrOn"><option value="0">Ні</option><option value="1">Так</option></select></div>
+ </div>
+ <div id="qrWrap" hidden><label class="control">Текст для QR</label><input type="text" id="sQr" placeholder="Номер, посилання, артикул…"></div>
+ <label class="check"><input type="checkbox" id="sInvert"> Білим по чорному</label>
 
-<button class="primary" id="print">Print</button>
-<button class="primary" id="save">Save PNG</button>
-<button class="secondary" id="reset">Reset preset</button>
-<div class="info">Для ретро-ефекту спробуй GAME BOY + Atkinson.</div>
+ <button class="primary" id="sPrint">Print</button>
+ <button class="primary" id="sSave">Зберегти / Поділитися PNG</button>
+ <div class="status" id="sStatus"></div>
 </div>
-<div class="preview"><div id="empty" class="empty">Завантаж фото для preview</div><canvas id="canvas" hidden></canvas></div>
+<div class="preview"><canvas id="sCanvas"></canvas><div class="meta" id="sMeta"></div></div>
 </div>
+
+<div id="printArea"></div>
 
 <script>
 'use strict';
-const $=id=>document.getElementById(id), F=$('file'), C=$('canvas'), X=C.getContext('2d',{willReadFrequently:true});
-let src=null;
+const $=id=>document.getElementById(id);
+const DPI=300, mm2px=mm=>Math.round(mm/25.4*DPI);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
-const P={
- gameboy:{c:20,b:0,s:10,d:100,p:2,a:'atkinson'},
- gameboyHigh:{c:55,b:-3,s:15,d:100,p:2,a:'floyd'},
- retro:{c:25,b:0,s:25,d:85,p:1,a:'atkinson'},
- thermal:{c:35,b:0,s:35,d:100,p:1,a:'floyd'}
+/* Друкована ширина QL-820NWB у точках (300 dpi) */
+const TAPES={
+ c62:{name:'62 мм безперервна',mm:62,w:696},
+ c50:{name:'50 мм безперервна',mm:50,w:554},
+ c38:{name:'38 мм безперервна',mm:38,w:413},
+ c29:{name:'29 мм безперервна',mm:29,w:306},
+ c12:{name:'12 мм безперервна',mm:12,w:106},
+ d62x29:{name:'62×29 мм (вирубна)',mm:62,w:696,h:271},
+ d62x100:{name:'62×100 мм (вирубна)',mm:62,w:696,h:1109},
+ d29x90:{name:'29×90 мм (вирубна)',mm:29,w:306,h:991},
+ d38x90:{name:'38×90 мм (вирубна)',mm:38,w:413,h:991},
+ d17x54:{name:'17×54 мм (вирубна)',mm:17,w:165,h:566},
+ d23x23:{name:'23×23 мм (вирубна)',mm:23,w:202,h:202}
 };
+function fillTapes(sel,onlyCont){for(const k in TAPES){if(onlyCont&&TAPES[k].h)continue;const o=document.createElement('option');o.value=k;o.textContent=TAPES[k].name;sel.appendChild(o)}}
+fillTapes($('pTape'),true);fillTapes($('sTape'),false);
 
-function labels(){
- $('cv').textContent=$('contrast').value;$('bv').textContent=$('brightness').value;
- $('sv').textContent=$('sharp').value;$('dv').textContent=$('dither').value;$('pv').textContent=$('pixel').value;
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+ const m=t.dataset.mode;$('mode-photo').hidden=m!=='photo';$('mode-sticker').hidden=m!=='sticker';
+ store.set('mode',m);if(m==='sticker')renderSticker();
+}));
+
+/* ---------- Print & share (спільне) ---------- */
+function printCanvas(cv,tapeMm){
+ const hMm=(tapeMm*cv.height/cv.width).toFixed(2);
+ $('pageStyle').textContent=`@media print{@page{size:${tapeMm}mm ${hMm}mm;margin:0}}`;
+ const img=new Image();img.src=cv.toDataURL('image/png');
+ const pa=$('printArea');pa.innerHTML='';pa.appendChild(img);
+ const go=()=>setTimeout(()=>window.print(),50);
+ img.complete?go():img.onload=go;
 }
+function shareCanvas(cv,name,statusEl){
+ cv.toBlob(async blob=>{
+  if(!blob){alert('Не вдалося створити PNG.');return}
+  const file=new File([blob],name,{type:'image/png'});
+  try{
+   if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});statusEl.textContent='Готово ✓';return}
+  }catch(e){if(e.name==='AbortError')return}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);statusEl.textContent='PNG готовий ✓';
+ },'image/png');
+}
+
+/* ===================== PHOTO ===================== */
+const PC=$('pCanvas'),PX=PC.getContext('2d',{willReadFrequently:true});
+let src=null;
+const P={
+ gameboy:{c:20,b:0,g:15,s:10,d:100,p:2,a:'atkinson'},
+ gameboyHigh:{c:55,b:-3,g:15,s:15,d:100,p:2,a:'floyd'},
+ retro:{c:25,b:0,g:20,s:25,d:85,p:1,a:'atkinson'},
+ thermal:{c:35,b:0,g:25,s:35,d:100,p:1,a:'floyd'}
+};
+const sliders=[['contrast','cv'],['brightness','bv'],['gamma','gv'],['sharp','sv'],['dither','dv'],['pixel','pv']];
+function labels(){sliders.forEach(([i,v])=>$(v).textContent=$(i).value)}
+function applyPreset(k){const p=P[k];if(!p)return;$('contrast').value=p.c;$('brightness').value=p.b;$('gamma').value=p.g;$('sharp').value=p.s;$('dither').value=p.d;$('pixel').value=p.p;$('algo').value=p.a;labels()}
 function status(t){$('status').textContent=t||''}
-function clamp(v){return Math.max(0,Math.min(255,v))}
-function gray(r,g,b){return .299*r+.587*g+.114*b}
+const clamp=v=>v<0?0:v>255?255:v;
+const gray=(r,g,b)=>.299*r+.587*g+.114*b;
 
-['contrast','brightness','sharp','dither','pixel'].forEach(id=>$(id).addEventListener('input',()=>{$('preset').value='custom';labels();render()}));
-$('algo').addEventListener('change',render);
-$('crop').addEventListener('change',render);
+sliders.forEach(([id])=>$(id).addEventListener('input',()=>{$('preset').value='custom';labels();schedule()}));
+['algo','crop','pTape','rotate'].forEach(id=>$(id).addEventListener('change',schedule));
+$('preset').addEventListener('change',()=>{applyPreset($('preset').value);schedule()});
+$('reset').addEventListener('click',()=>{$('preset').value='gameboy';applyPreset('gameboy');schedule()});
 
-$('preset').addEventListener('change',()=>{
- const p=P[$('preset').value];
- if(p){$('contrast').value=p.c;$('brightness').value=p.b;$('sharp').value=p.s;$('dither').value=p.d;$('pixel').value=p.p;$('algo').value=p.a;labels()}
- render();
-});
-
-F.addEventListener('change',e=>{
- const f=e.target.files&&e.target.files[0]; if(!f)return;
- if(!f.type.startsWith('image/')){status('Потрібно вибрати зображення.');return}
+$('file').addEventListener('change',e=>{
+ const f=e.target.files&&e.target.files[0];if(!f)return;
+ if(f.type&&!f.type.startsWith('image/')){status('Потрібно вибрати зображення.');return}
  status('Завантаження…');
- const r=new FileReader();
- r.onload=()=>{
-  const im=new Image();
-  im.onload=()=>{src=im;$('empty').hidden=true;C.hidden=false;status('Фото завантажено ✓');render()};
-  im.onerror=()=>status('Не вдалося відкрити фото.');
-  im.src=r.result;
- };
- r.onerror=()=>status('Не вдалося прочитати файл.');
- r.readAsDataURL(f);
+ const url=URL.createObjectURL(f),im=new Image();
+ im.onload=()=>{src=im;$('pEmpty').hidden=true;PC.hidden=false;status('Фото завантажено ✓');render()};
+ im.onerror=()=>status('Не вдалося відкрити фото (HEIC? спробуй «Зберегти як JPEG»).');
+ im.src=url;
 });
+
+let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(render)}
+
+/* Якісне зменшення: кроками по 2×, щоб не було муару від одного великого стрибка */
+function downscale(img,sx,sy,sw,sh,w,h,rot){
+ let cur=document.createElement('canvas'),cw=sw,ch=sh;
+ cur.width=cw;cur.height=ch;let cx=cur.getContext('2d');
+ cx.drawImage(img,sx,sy,sw,sh,0,0,cw,ch);
+ if(rot){const r=document.createElement('canvas');r.width=ch;r.height=cw;const rx=r.getContext('2d');rx.translate(ch,0);rx.rotate(Math.PI/2);rx.drawImage(cur,0,0);cur=r;[cw,ch]=[ch,cw]}
+ while(cw/2>w){const n=document.createElement('canvas');n.width=Math.round(cw/2);n.height=Math.round(ch/2);
+  const nx=n.getContext('2d');nx.imageSmoothingQuality='high';nx.drawImage(cur,0,0,n.width,n.height);cur=n;cw=n.width;ch=n.height}
+ const o=document.createElement('canvas');o.width=w;o.height=h;const ox=o.getContext('2d',{willReadFrequently:true});
+ ox.imageSmoothingQuality='high';ox.drawImage(cur,0,0,w,h);return ox.getImageData(0,0,w,h);
+}
 
 function sharpen(a,w,h,q){
- if(!q)return;const s=new Uint8ClampedArray(a),k=q/100;
- for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-  const i=(y*w+x)*4, center=gray(s[i],s[i+1],s[i+2]);
-  const avg=(gray(s[i-4],s[i-3],s[i-2])+gray(s[i+4],s[i+5],s[i+6])+gray(s[i-w*4],s[i-w*4+1],s[i-w*4+2])+gray(s[i+w*4],s[i+w*4+1],s[i+w*4+2]))/4;
-  const v=clamp(center+(center-avg)*k*2);a[i]=a[i+1]=a[i+2]=v;
- }
+ if(!q)return;const s=new Float32Array(a),k=q/50;
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
+  const avg=(s[i-1]+s[i+1]+s[i-w]+s[i+w])/4;a[i]=clamp(s[i]+(s[i]-avg)*k)}
 }
-function floyd(a,w,h,s){
- s/=100;
- for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,o=a[i],n=o<128?0:255,e=(o-n)*s;a[i]=n;
-  if(x+1<w)a[i+1]+=e*7/16;if(x&&y+1<h)a[i+w-1]+=e*3/16;if(y+1<h)a[i+w]+=e*5/16;if(x+1<w&&y+1<h)a[i+w+1]+=e/16;
- }
+/* Floyd–Steinberg зі «змійкою» — менше діагональних артефактів */
+function floyd(a,w,h,s){s/=100;
+ for(let y=0;y<h;y++){const rtl=y&1;
+  for(let n=0;n<w;n++){const x=rtl?w-1-n:n,i=y*w+x,o=a[i],v=o<128?0:255,e=(o-v)*s,d=rtl?-1:1;a[i]=v;
+   if(x+d>=0&&x+d<w)a[i+d]+=e*7/16;
+   if(y+1<h){if(x-d>=0&&x-d<w)a[i+w-d]+=e*3/16;a[i+w]+=e*5/16;if(x+d>=0&&x+d<w)a[i+w+d]+=e/16}}}
 }
-function atkinson(a,w,h,s){
- s/=100;
- for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,o=a[i],n=o<128?0:255,e=(o-n)*s/8;a[i]=n;
-  for(const [dx,dy] of [[1,0],[2,0],[-1,1],[0,1],[1,1],[0,2]]){const xx=x+dx,yy=y+dy;if(xx>=0&&xx<w&&yy>=0&&yy<h)a[yy*w+xx]+=e}
- }
+function atkinson(a,w,h,s){s/=100;const N=[[1,0],[2,0],[-1,1],[0,1],[1,1],[0,2]];
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,o=a[i],v=o<128?0:255,e=(o-v)*s/8;a[i]=v;
+  for(const[dx,dy]of N){const xx=x+dx,yy=y+dy;if(xx>=0&&xx<w&&yy<h)a[yy*w+xx]+=e}}
 }
-function bayer(a,w,h,s){
- const m=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];s/=100;
- for(let y=0;y<h;y++)for(let x=0;x<w;x++){const t=(m[y%4][x%4]+.5)*16;a[y*w+x]=a[y*w+x]<128+(t-128)*s?0:255}
+function bayer(a,w,h,s){const m=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];s/=100;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const t=(m[y&3][x&3]+.5)*16;a[y*w+x]=a[y*w+x]<128+(t-128)*s?0:255}
 }
 
 function render(){
  if(!src)return;
- const crop=$('crop').value;
- let ratio;
- if(crop==='1:1')ratio=1;else if(crop==='4:3'||crop==='gb')ratio=4/3;else if(crop==='3:2')ratio=3/2;else if(crop==='16:9')ratio=16/9;else ratio=src.width/src.height;
+ const tape=TAPES[$('pTape').value],rot=$('rotate').checked,crop=$('crop').value;
+ const iw=rot?src.height:src.width,ih=rot?src.width:src.height;
+ let ratio={'1:1':1,'4:3':4/3,'gb':4/3,'3:2':3/2,'16:9':16/9}[crop]||iw/ih;
+ // crop у системі координат вже повернутого фото
+ let cw=iw,ch=ih;
+ if(crop!=='original'){if(iw/ih>ratio)cw=Math.round(ih*ratio);else ch=Math.round(iw/ratio)}
+ let sx,sy,sw,sh;
+ if(!rot){sw=cw;sh=ch;sx=Math.round((src.width-sw)/2);sy=Math.round((src.height-sh)/2)}
+ else{sw=ch;sh=cw;sx=Math.round((src.width-sw)/2);sy=Math.round((src.height-sh)/2)}
 
- let sx=0,sy=0,sw=src.width,sh=src.height;
- if(crop!=='original'){
-  const sr=src.width/src.height;
-  if(sr>ratio){sw=Math.round(src.height*ratio);sx=Math.round((src.width-sw)/2)}
-  else{sh=Math.round(src.width/ratio);sy=Math.round((src.height-sh)/2)}
- }
- const max=900;let w=Math.min(max,sw),h=Math.round(w/ratio);
- const px=+$('pixel').value;w=Math.max(1,Math.floor(w/px)*px);h=Math.max(1,Math.floor(h/px)*px);
-
- const t=document.createElement('canvas');t.width=w;t.height=h;
- const z=t.getContext('2d',{willReadFrequently:true});z.imageSmoothingEnabled=true;
- z.drawImage(src,sx,sy,sw,sh,0,0,w,h);
- const im=z.getImageData(0,0,w,h),d=im.data,c=+$('contrast').value,b=+$('brightness').value;
+ const px=+$('pixel').value,W=tape.w,H=Math.round(W/ratio);
+ const w=Math.max(1,Math.round(W/px)),h=Math.max(1,Math.round(H/px)); // реальна «пікселізація»
+ const im=downscale(src,sx,sy,sw,sh,w,h,rot),d=im.data;
+ const c=+$('contrast').value,b=+$('brightness').value,g=1+(+$('gamma').value)/100;
  const f=(259*(c+255))/(255*(259-c));
- for(let i=0;i<d.length;i+=4){let v=f*(gray(d[i],d[i+1],d[i+2])-128)+128+b*2.55;v=clamp(v);d[i]=d[i+1]=d[i+2]=v}
- sharpen(d,w,h,+$('sharp').value);z.putImageData(im,0,0);
-
- const a=new Float32Array(w*h);for(let i=0;i<w*h;i++)a[i]=d[i*4];
+ const a=new Float32Array(w*h);
+ for(let i=0;i<w*h;i++){let v=gray(d[i*4],d[i*4+1],d[i*4+2]);
+  v=255*Math.pow(v/255,1/g);           // підсвітлення півтонів: термодрук «розпливається» і темнішає
+  v=clamp(f*(v-128)+128+b*2.55);a[i]=v}
+ sharpen(a,w,h,+$('sharp').value);
  const q=+$('dither').value,alg=$('algo').value;
  if(alg==='floyd')floyd(a,w,h,q);else if(alg==='atkinson')atkinson(a,w,h,q);else if(alg==='bayer')bayer(a,w,h,q);
 
- C.width=w;C.height=h;const out=X.createImageData(w,h);
- for(let i=0;i<w*h;i++){const v=a[i]<128?0:255;out.data[i*4]=v;out.data[i*4+1]=v;out.data[i*4+2]=v;out.data[i*4+3]=255}
- X.putImageData(out,0,0);
+ const small=document.createElement('canvas');small.width=w;small.height=h;
+ const sx2=small.getContext('2d'),out=sx2.createImageData(w,h);
+ for(let i=0;i<w*h;i++){const v=a[i]<128?0:255;out.data[i*4]=out.data[i*4+1]=out.data[i*4+2]=v;out.data[i*4+3]=255}
+ sx2.putImageData(out,0,0);
+ PC.width=W;PC.height=H;PX.imageSmoothingEnabled=false;PX.drawImage(small,0,0,W,H);
+ $('pMeta').textContent=`${W}×${H} px · ${tape.mm}×${(H/DPI*25.4).toFixed(0)} мм`;
+}
+$('pPrint').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}printCanvas(PC,TAPES[$('pTape').value].mm)});
+$('pSave').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}shareCanvas(PC,'brother-photo.png',$('status'))});
+
+/* ===================== STICKER ===================== */
+const SC=$('sCanvas'),SX=SC.getContext('2d',{willReadFrequently:true});
+const ICON_API='https://api.iconify.design';
+const CATS={
+ 'Сервіс':['mdi:wrench','mdi:screwdriver','mdi:tools','mdi:hammer-wrench','mdi:soldering-iron','mdi:cog','mdi:magnify','mdi:clipboard-check','mdi:shield-check','mdi:clock-outline','mdi:check-circle','mdi:close-circle','mdi:package-variant-closed','mdi:truck-delivery','mdi:cash','mdi:account','mdi:phone','mdi:calendar','mdi:tag','mdi:archive'],
+ 'Пристрої':['mdi:cellphone','mdi:tablet','mdi:laptop','mdi:monitor','mdi:desktop-tower','mdi:watch','mdi:headphones','mdi:gamepad-variant','mdi:camera','mdi:printer','mdi:router-wireless','mdi:television','mdi:speaker','mdi:keyboard','mdi:mouse','mdi:quadcopter','mdi:robot-vacuum','mdi:microwave','mdi:washing-machine','mdi:car'],
+ 'Запчастини':['mdi:battery','mdi:battery-charging','mdi:chip','mdi:memory','mdi:harddisk','mdi:sd','mdi:usb','mdi:usb-port','mdi:power-plug','mdi:fan','mdi:cable-data','mdi:expansion-card','mdi:resistor','mdi:led-on','mdi:magnet','mdi:camera-iris','mdi:volume-high','mdi:microphone','mdi:wifi','mdi:bluetooth','mdi:sim','mdi:cellphone-screenshot','mdi:fingerprint','mdi:vibrate'],
+ 'Увага':['mdi:alert','mdi:glass-fragile','mdi:water-off','mdi:fire','mdi:lightning-bolt','mdi:power','mdi:thermometer-alert','mdi:cancel','mdi:alert-octagon','mdi:battery-alert','mdi:arrow-up-bold','mdi:umbrella','mdi:recycle','mdi:trash-can','mdi:lock','mdi:eye-off','mdi:hand-back-right-off','mdi:skull-crossbones'],
+ 'Бренди':['simple-icons:apple','simple-icons:samsung','simple-icons:xiaomi','simple-icons:huawei','simple-icons:google','simple-icons:lenovo','simple-icons:asus','simple-icons:acer','simple-icons:hp','simple-icons:dell','simple-icons:sony','simple-icons:lg','simple-icons:oneplus','simple-icons:motorola','simple-icons:nokia','simple-icons:honor','simple-icons:oppo','simple-icons:vivo','simple-icons:playstation','simple-icons:nintendoswitch'],
+ 'Нещодавні':null
+};
+const iconUrl=n=>{const[p,i]=n.split(':');return `${ICON_API}/${p}/${i}.svg?height=512&color=%23000`};
+const iconCache=new Map();
+function loadIcon(name){
+ if(!name)return Promise.resolve(null);
+ if(iconCache.has(name))return iconCache.get(name);
+ const pr=(async()=>{
+  let svg=store.get('svg:'+name,null);
+  if(!svg){const r=await fetch(iconUrl(name));if(!r.ok)throw new Error('icon');svg=await r.text();store.set('svg:'+name,svg)}
+  const im=new Image();im.src=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+  await im.decode();return im;
+ })();
+ pr.catch(()=>iconCache.delete(name));iconCache.set(name,pr);return pr;
 }
 
-$('print').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}window.print()});
+const S=Object.assign({tape:'c62',orient:'along',len:60,title:'',sub:'',font:'Inter',align:'left',layout:'left',iconScale:85,icon:'mdi:cellphone',frame:'none',qrOn:'0',qr:'',invert:false},store.get('sticker',{}));
+const bind=[['sTape','tape'],['sOrient','orient'],['sLen','len'],['sTitle','title'],['sSub','sub'],['sFont','font'],['sAlign','align'],['sLayout','layout'],['sIconScale','iconScale'],['sFrame','frame'],['sQrOn','qrOn'],['sQr','qr']];
+bind.forEach(([id,k])=>{$(id).value=S[k];$(id).addEventListener('input',()=>{S[k]=$(id).value;sChanged()})});
+$('sInvert').checked=S.invert;$('sInvert').addEventListener('change',()=>{S.invert=$('sInvert').checked;sChanged()});
 
-$('save').addEventListener('click',()=>{
- if(!src){alert('Спочатку завантаж фото.');return}
- C.toBlob(blob=>{
-  if(!blob){alert('Не вдалося створити PNG.');return}
-  const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='brother-retro-photo.png';document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);status('PNG готовий ✓');
- },'image/png');
-});
+function sChanged(){
+ $('lenWrap').hidden=!!TAPES[S.tape].h;$('qrWrap').hidden=S.qrOn!=='1';
+ $('lenV').textContent=S.len+' мм';$('icV').textContent=S.iconScale+'%';
+ store.set('sticker',S);sSchedule();
+}
+let sraf=0;function sSchedule(){cancelAnimationFrame(sraf);sraf=requestAnimationFrame(renderSticker)}
 
-$('reset').addEventListener('click',()=>{
- $('preset').value='gameboy';const p=P.gameboy;
- $('contrast').value=p.c;$('brightness').value=p.b;$('sharp').value=p.s;$('dither').value=p.d;$('pixel').value=p.p;$('algo').value=p.a;
- labels();render();
-});
-labels();
+/* --- іконки: категорії та пошук --- */
+let curCat=store.get('cat','Сервіс');
+function recent(){return store.get('recentIcons',[])}
+function setIcon(n){S.icon=n;const r=recent().filter(x=>x!==n);r.unshift(n);store.set('recentIcons',r.slice(0,40));showCurrent();sChanged();markGrid()}
+function showCurrent(){
+ $('curIc').innerHTML=S.icon?`<img src="${iconUrl(S.icon)}" alt="">`:'';
+ $('curName').textContent=S.icon||'Іконку не вибрано';
+}
+function markGrid(){document.querySelectorAll('#iconGrid .ic').forEach(e=>e.classList.toggle('on',e.dataset.n===S.icon))}
+function showIcons(list,emptyMsg){
+ const g=$('iconGrid');g.innerHTML='';
+ if(!list.length){g.innerHTML=`<div class="hint" style="grid-column:1/-1">${emptyMsg||'Нічого не знайдено'}</div>`;return}
+ list.forEach(n=>{const d=document.createElement('div');d.className='ic';d.dataset.n=n;d.title=n;
+  const im=new Image();im.loading='lazy';im.src=iconUrl(n);im.onerror=()=>d.remove();d.appendChild(im);
+  d.onclick=()=>setIcon(n);g.appendChild(d)});
+ markGrid();
+}
+function drawCats(){
+ const c=$('cats');c.innerHTML='';
+ Object.keys(CATS).forEach(k=>{const b=document.createElement('button');b.className='chip'+(k===curCat?' on':'');b.textContent=k;
+  b.onclick=()=>{curCat=k;store.set('cat',k);$('sSearch').value='';drawCats();showIcons(k==='Нещодавні'?recent():CATS[k],'Ще немає нещодавніх іконок')};c.appendChild(b)});
+ const none=document.createElement('button');none.className='chip';none.textContent='✕ Без іконки';
+ none.onclick=()=>{S.icon='';showCurrent();sChanged();markGrid()};c.appendChild(none);
+}
+let st=0;
+$('sSearch').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(search,350)});
+async function search(){
+ const q=$('sSearch').value.trim();if(!q){showIcons(curCat==='Нещодавні'?recent():CATS[curCat]);return}
+ $('iconHint').textContent='Шукаю…';
+ try{
+  const r=await fetch(`${ICON_API}/search?query=${encodeURIComponent(q)}&limit=120&prefixes=mdi,tabler,material-symbols,ph,simple-icons,game-icons,fluent`);
+  const j=await r.json();curCat='';drawCats();showIcons(j.icons||[]);
+  $('iconHint').textContent=`Знайдено: ${(j.icons||[]).length}. Бренди: просто назва (apple, samsung, xiaomi).`;
+ }catch(e){$('iconHint').textContent='Немає інтернету — доступні лише нещодавні іконки.'}
+}
+
+/* --- текст --- */
+function wrapLines(ctx,text,maxW){
+ const out=[];
+ for(const para of text.split('\n')){
+  const words=para.split(/\s+/).filter(Boolean);if(!words.length){out.push('');continue}
+  let line=words[0];
+  for(let i=1;i<words.length;i++){const t=line+' '+words[i];if(ctx.measureText(t).width<=maxW)line=t;else{out.push(line);line=words[i]}}
+  out.push(line);
+ }
+ return out;
+}
+function fit(ctx,text,font,weight,maxW,maxH,lh){
+ let lo=6,hi=Math.max(8,Math.floor(maxH)),best=null;
+ while(lo<=hi){const m=(lo+hi)>>1;ctx.font=`${weight} ${m}px "${font}"`;
+  const lines=wrapLines(ctx,text,maxW),wid=Math.max(...lines.map(l=>ctx.measureText(l).width));
+  if(wid<=maxW&&lines.length*m*lh<=maxH){best={size:m,lines};lo=m+1}else hi=m-1}
+ if(!best){ctx.font=`${weight} 6px "${font}"`;best={size:6,lines:wrapLines(ctx,text,maxW)}}
+ return best;
+}
+function drawBlock(ctx,b,font,weight,x,y,w,align,lh){
+ ctx.font=`${weight} ${b.size}px "${font}"`;ctx.textBaseline='middle';ctx.textAlign=align;
+ const ax=align==='center'?x+w/2:x;
+ b.lines.forEach((l,i)=>ctx.fillText(l,ax,y+b.size*lh*(i+.5)));
+}
+const WEIGHT={'Inter':900,'Roboto Condensed':900,'Montserrat':800,'Rubik':900,'Oswald':700,'Unbounded':800,'JetBrains Mono':700};
+const SUBW={'Inter':700,'Roboto Condensed':700,'Montserrat':600,'Rubik':500,'Oswald':500,'Unbounded':600,'JetBrains Mono':700};
+
+function drawQR(ctx,text,x,y,size,fg){
+ if(typeof qrcode==='undefined'||!text)return;
+ qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];
+ const q=qrcode(0,'M');q.addData(text);q.make();
+ const n=q.getModuleCount(),cell=Math.floor(size/n),off=Math.floor((size-cell*n)/2);
+ ctx.fillStyle=fg;
+ for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))ctx.fillRect(x+off+c*cell,y+off+r*cell,cell,cell);
+}
+
+async function renderSticker(){
+ const t=TAPES[S.tape];
+ let pw=t.w,pl=t.h||mm2px(+S.len);               // поперек стрічки × вздовж
+ const along=S.orient==='along';
+ const W=along?pl:pw,H=along?pw:pl;              // макет так, як людина його читає
+ const fg=S.invert?'#fff':'#000',bg=S.invert?'#000':'#fff';
+ const title=S.title.trim()||(S.layout==='icon'?'':'ТЕКСТ'),sub=S.sub.trim();
+ const font=S.font;
+ try{await Promise.all([document.fonts.load(`${WEIGHT[font]} 40px "${font}"`,'АаЇї'),document.fonts.load(`${SUBW[font]} 40px "${font}"`,'АаЇї')])}catch(e){}
+ let iconImg=null;
+ if(S.icon&&S.layout!=='text'){try{iconImg=await loadIcon(S.icon)}catch(e){$('sStatus').textContent='Іконка не завантажилась (немає інтернету?)'}}
+
+ const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ x.fillStyle=bg;x.fillRect(0,0,W,H);
+ const m=Math.min(W,H),pad=Math.round(m*.07);
+ // рамка
+ if(S.frame!=='none'){
+  const lw=Math.max(3,Math.round(m*(S.frame==='thick'?.045:.018))),o=Math.round(m*.03)+lw/2;
+  x.strokeStyle=fg;x.lineWidth=lw;x.beginPath();
+  const r=S.frame==='round'?m*.12:0;
+  x.roundRect?x.roundRect(o,o,W-2*o,H-2*o,r):x.rect(o,o,W-2*o,H-2*o);x.stroke();
+ }
+ const fp=S.frame==='none'?pad:pad+Math.round(m*.05);
+ let ix=fp,iy=fp,iw=W-2*fp,ih=H-2*fp;
+ // QR праворуч (або знизу, якщо макет вузький)
+ if(S.qrOn==='1'&&S.qr.trim()){
+  if(iw>=ih){const qs=Math.min(ih,iw*.42);drawQR(x,S.qr.trim(),ix+iw-qs,iy+(ih-qs)/2,qs,fg);iw-=qs+fp*.6}
+  else{const qs=Math.min(iw,ih*.42);drawQR(x,S.qr.trim(),ix+(iw-qs)/2,iy+ih-qs,qs,fg);ih-=qs+fp*.6}
+ }
+ const drawIcon=(px,py,size)=>{
+  if(!iconImg)return;
+  const tmp=document.createElement('canvas');tmp.width=tmp.height=Math.max(1,Math.round(size));
+  const tx=tmp.getContext('2d');tx.drawImage(iconImg,0,0,tmp.width,tmp.height);
+  if(S.invert){tx.globalCompositeOperation='source-in';tx.fillStyle='#fff';tx.fillRect(0,0,tmp.width,tmp.height)}
+  x.drawImage(tmp,Math.round(px),Math.round(py));
+ };
+ const sc=S.iconScale/100,gap=Math.round(m*.06),lh=1.08;
+ let tx=ix,ty=iy,tw=iw,th=ih;
+ if(S.layout==='icon'){const s=Math.min(iw,ih)*sc;drawIcon(ix+(iw-s)/2,iy+(ih-s)/2,s);tw=0}
+ else if(S.layout==='left'&&iconImg){const s=Math.min(ih,iw*.45)*sc;drawIcon(ix+(Math.min(ih,iw*.45)-s)/2,iy+(ih-s)/2,s);const used=Math.min(ih,iw*.45)+gap;tx+=used;tw-=used}
+ else if(S.layout==='top'&&iconImg){const box=Math.min(iw,ih*.5),s=box*sc;drawIcon(ix+(iw-s)/2,iy+(box-s)/2,s);ty+=box+gap*.5;th-=box+gap*.5}
+
+ if(tw>10&&th>10&&title){
+  x.fillStyle=fg;
+  const align=S.layout==='top'?'center':S.align;
+  if(sub){
+   const tb=fit(x,title,font,WEIGHT[font],tw,th*.62,lh);
+   const sb=fit(x,sub,font,SUBW[font],tw,Math.min(th*.38,tb.size*.75*sub.split('\n').length*lh+1),lh);
+   const total=tb.lines.length*tb.size*lh+gap*.3+sb.lines.length*sb.size*lh,y0=ty+(th-total)/2;
+   drawBlock(x,tb,font,WEIGHT[font],tx,y0,tw,align,lh);
+   drawBlock(x,sb,font,SUBW[font],tx,y0+tb.lines.length*tb.size*lh+gap*.3,tw,align,lh);
+  }else{
+   const tb=fit(x,title,font,WEIGHT[font],tw,th,lh);
+   drawBlock(x,tb,font,WEIGHT[font],tx,ty+(th-tb.lines.length*tb.size*lh)/2,tw,align,lh);
+  }
+ }
+ // 1-біт: чіткі краї тексту й іконок без сірого «пуху»
+ const d=x.getImageData(0,0,W,H),p=d.data;
+ for(let i=0;i<p.length;i+=4){const v=gray(p[i],p[i+1],p[i+2])<128?0:255;p[i]=p[i+1]=p[i+2]=v;p[i+3]=255}
+ x.putImageData(d,0,0);
+ // фінальне полотно: завжди ширина = ширина стрічки
+ if(along){SC.width=H;SC.height=W;SX.save();SX.translate(H,0);SX.rotate(Math.PI/2);SX.drawImage(c,0,0);SX.restore();
+  SC.style.transform='';}
+ else{SC.width=W;SC.height=H;SX.drawImage(c,0,0)}
+ // превʼю показуємо в тому вигляді, як читатиметься
+ previewCanvas(c);
+ $('sMeta').textContent=`${t.mm}×${(pl/DPI*25.4).toFixed(0)} мм · ${pw}×${pl} px`;
+}
+/* окреме полотно для перегляду (повернуте «для читання»), друкується SC */
+let PV=null;
+function previewCanvas(c){
+ if(!PV){PV=document.createElement('canvas');SC.after(PV);SC.style.display='none'}
+ PV.width=c.width;PV.height=c.height;PV.getContext('2d').drawImage(c,0,0);
+}
+$('sPrint').addEventListener('click',()=>printCanvas(SC,TAPES[S.tape].mm));
+$('sSave').addEventListener('click',()=>shareCanvas(SC,'brother-sticker.png',$('sStatus')));
+
+/* ---------- init ---------- */
+applyPreset('gameboy');
+drawCats();showIcons(curCat==='Нещодавні'?recent():(CATS[curCat]||CATS['Сервіс']));showCurrent();sChanged();
+if(store.get('mode','photo')==='sticker')document.querySelector('.tab[data-mode=sticker]').click();
+document.fonts&&document.fonts.ready.then(()=>sSchedule());
 </script>
 </body>
 </html>
