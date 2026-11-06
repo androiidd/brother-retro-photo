@@ -134,7 +134,8 @@ canvas{max-width:100%;max-height:60vh;display:block;background:#fff;image-render
  </div>
  <div id="lenWrap">
   <label class="control">Довжина <span class="val" id="lenV"></span></label>
-  <input id="sLen" type="range" min="15" max="200" step="1">
+  <input id="sLen" type="range" min="10" max="300" step="1">
+  <div class="chips" id="lenChips"></div>
  </div>
 
  <div class="section">Текст</div>
@@ -163,10 +164,10 @@ canvas{max-width:100%;max-height:60vh;display:block;background:#fff;image-render
  <div class="current"><div class="ic" id="curIc"></div><span id="curName">Іконку не вибрано</span></div>
  <div class="chips" id="cats"></div>
  <div class="row" style="margin-top:8px">
-  <input type="text" id="sSearch" placeholder="Пошук англійською: battery, screw…" enterkeyhint="search">
+  <input type="text" id="sSearch" placeholder="Пошук: dog, battery, собака, череп…" enterkeyhint="search">
  </div>
  <div class="icons" id="iconGrid"></div>
- <div class="hint" id="iconHint">Понад 200 000 іконок і логотипів брендів з бібліотеки Iconify. Пошук працює англійською.</div>
+ <div class="hint" id="iconHint">Понад 200 000 іконок, емодзі та логотипів брендів (Iconify). Пошук англійською; прості слова розуміє й українською.</div>
 
  <div class="section">Оформлення</div>
  <div class="row">
@@ -220,10 +221,11 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 function printCanvas(cv,tapeMm){
  const hMm=(tapeMm*cv.height/cv.width).toFixed(2);
  $('pageStyle').textContent=`@media print{@page{size:${tapeMm}mm ${hMm}mm;margin:0}}`;
- const img=new Image();img.src=cv.toDataURL('image/png');
- const pa=$('printArea');pa.innerHTML='';pa.appendChild(img);
- const go=()=>setTimeout(()=>window.print(),50);
- img.complete?go():img.onload=go;
+ const pc=document.createElement('canvas');pc.width=cv.width;pc.height=cv.height;
+ pc.getContext('2d').drawImage(cv,0,0);
+ pc.style.cssText='display:block;width:100%;height:auto;max-width:none;max-height:none;box-shadow:none;image-rendering:pixelated';
+ const pa=$('printArea');pa.innerHTML='';pa.appendChild(pc);
+ window.print();
 }
 function shareCanvas(cv,name,statusEl){
  cv.toBlob(async blob=>{
@@ -347,8 +349,13 @@ const CATS={
  'Запчастини':['mdi:battery','mdi:battery-charging','mdi:chip','mdi:memory','mdi:harddisk','mdi:sd','mdi:usb','mdi:usb-port','mdi:power-plug','mdi:fan','mdi:cable-data','mdi:expansion-card','mdi:resistor','mdi:led-on','mdi:magnet','mdi:camera-iris','mdi:volume-high','mdi:microphone','mdi:wifi','mdi:bluetooth','mdi:sim','mdi:cellphone-screenshot','mdi:fingerprint','mdi:vibrate'],
  'Увага':['mdi:alert','mdi:glass-fragile','mdi:water-off','mdi:fire','mdi:lightning-bolt','mdi:power','mdi:thermometer-alert','mdi:cancel','mdi:alert-octagon','mdi:battery-alert','mdi:arrow-up-bold','mdi:umbrella','mdi:recycle','mdi:trash-can','mdi:lock','mdi:eye-off','mdi:hand-back-right-off','mdi:skull-crossbones'],
  'Бренди':['simple-icons:apple','simple-icons:samsung','simple-icons:xiaomi','simple-icons:huawei','simple-icons:google','simple-icons:lenovo','simple-icons:asus','simple-icons:acer','simple-icons:hp','simple-icons:dell','simple-icons:sony','simple-icons:lg','simple-icons:oneplus','simple-icons:motorola','simple-icons:nokia','simple-icons:honor','simple-icons:oppo','simple-icons:vivo','simple-icons:playstation','simple-icons:nintendoswitch'],
+ 'Собаки':['fluent-emoji-high-contrast:dog-face','fluent-emoji-high-contrast:dog','fluent-emoji-high-contrast:poodle','fluent-emoji-high-contrast:guide-dog','fluent-emoji-high-contrast:service-dog','fluent-emoji-high-contrast:paw-prints','fluent-emoji-high-contrast:bone','fluent-emoji-high-contrast:hot-dog','mdi:dog','mdi:dog-side','mdi:dog-service','mdi:paw','mdi:bone','mdi:bowl-mix','tabler:dog','tabler:dog-bowl','tabler:paw','ph:dog','ph:paw-print','game-icons:sitting-dog','game-icons:labrador-head','game-icons:husky-head','game-icons:dog-house','game-icons:dog-bowl','game-icons:sniffing-dog','game-icons:jumping-dog','game-icons:poodle','game-icons:bulldog','game-icons:dachshund','game-icons:dog-bone'],
+ 'Приколи':['fluent-emoji-high-contrast:face-with-tears-of-joy','fluent-emoji-high-contrast:rolling-on-the-floor-laughing','fluent-emoji-high-contrast:smiling-face-with-sunglasses','fluent-emoji-high-contrast:winking-face-with-tongue','fluent-emoji-high-contrast:zany-face','fluent-emoji-high-contrast:exploding-head','fluent-emoji-high-contrast:face-screaming-in-fear','fluent-emoji-high-contrast:skull','fluent-emoji-high-contrast:pile-of-poo','fluent-emoji-high-contrast:clown-face','fluent-emoji-high-contrast:ghost','fluent-emoji-high-contrast:alien','fluent-emoji-high-contrast:robot','fluent-emoji-high-contrast:see-no-evil-monkey','fluent-emoji-high-contrast:unicorn','fluent-emoji-high-contrast:fire','fluent-emoji-high-contrast:bomb','fluent-emoji-high-contrast:party-popper','fluent-emoji-high-contrast:crown','fluent-emoji-high-contrast:thumbs-up','fluent-emoji-high-contrast:victory-hand','fluent-emoji-high-contrast:sign-of-the-horns','fluent-emoji-high-contrast:hot-beverage','fluent-emoji-high-contrast:beer-mug','fluent-emoji-high-contrast:pizza','fluent-emoji-high-contrast:rocket','fluent-emoji-high-contrast:cat-face','fluent-emoji-high-contrast:duck','fluent-emoji-high-contrast:sleeping-face','fluent-emoji-high-contrast:money-bag','mdi:emoticon-cool','mdi:emoticon-devil','mdi:emoticon-dead','mdi:ninja','mdi:pirate','mdi:skull-crossbones','mdi:coffee','mdi:sleep'],
  'Нещодавні':null
 };
+/* Простий перекладач для пошуку українською */
+const UA={'собака':'dog','пес':'dog','песик':'dog','цуцик':'puppy','лапа':'paw','кістка':'bone','будка':'dog house','миска':'bowl','кіт':'cat','кішка':'cat','сміх':'laugh','смішно':'laugh','череп':'skull','вогонь':'fire','кава':'coffee','пиво':'beer','піца':'pizza','серце':'heart','корона':'crown','ракета':'rocket','привид':'ghost','робот':'robot','батарея':'battery','акумулятор':'battery','екран':'screen','дисплей':'screen','телефон':'phone','ноутбук':'laptop','плата':'chip','чіп':'chip','гвинт':'screw','болт':'screw','викрутка':'screwdriver','паяльник':'soldering','кабель':'cable','зарядка':'charger','камера':'camera','динамік':'speaker','мікрофон':'microphone','кнопка':'button','вода':'water','обережно':'warning','увага':'warning','крихке':'fragile','гроші':'money','годинник':'clock','коробка':'box','замок':'lock','ключ':'key','стрілка':'arrow','зірка':'star','квітка':'flower','машина':'car','їжа':'food','качка':'duck','мавпа':'monkey','єдиноріг':'unicorn','сон':'sleep','спати':'sleep'};
+const translate=q=>q.toLowerCase().split(/\s+/).map(w=>UA[w]||w).join(' ');
 const iconUrl=n=>{const[p,i]=n.split(':');return `${ICON_API}/${p}/${i}.svg?height=512&color=%23000`};
 const iconCache=new Map();
 function loadIcon(name){
@@ -368,7 +375,16 @@ const bind=[['sTape','tape'],['sOrient','orient'],['sLen','len'],['sTitle','titl
 bind.forEach(([id,k])=>{$(id).value=S[k];$(id).addEventListener('input',()=>{S[k]=$(id).value;sChanged()})});
 $('sInvert').checked=S.invert;$('sInvert').addEventListener('change',()=>{S.invert=$('sInvert').checked;sChanged()});
 
+/* Швидкі розміри для безперервної стрічки */
+const LEN_PRESETS=[['Квадрат','sq'],['25 мм',25],['40 мм',40],['50 мм',50],['62 мм',62],['80 мм',80],['100 мм',100],['150 мм',150],['200 мм',200]];
+function drawLenChips(){
+ const c=$('lenChips');c.innerHTML='';
+ LEN_PRESETS.forEach(([t,v])=>{const val=v==='sq'?TAPES[S.tape].mm:v;
+  const b=document.createElement('button');b.className='chip'+(+S.len===val?' on':'');b.textContent=t;
+  b.onclick=()=>{S.len=val;$('sLen').value=val;sChanged()};c.appendChild(b)});
+}
 function sChanged(){
+ drawLenChips();
  $('lenWrap').hidden=!!TAPES[S.tape].h;$('qrWrap').hidden=S.qrOn!=='1';
  $('lenV').textContent=S.len+' мм';$('icV').textContent=S.iconScale+'%';
  store.set('sticker',S);sSchedule();
@@ -402,10 +418,10 @@ function drawCats(){
 let st=0;
 $('sSearch').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(search,350)});
 async function search(){
- const q=$('sSearch').value.trim();if(!q){showIcons(curCat==='Нещодавні'?recent():CATS[curCat]);return}
+ const q=$('sSearch').value.trim();if(!q){showIcons(curCat==='Нещодавні'?recent():(CATS[curCat]||CATS['Сервіс']));return}
  $('iconHint').textContent='Шукаю…';
  try{
-  const r=await fetch(`${ICON_API}/search?query=${encodeURIComponent(q)}&limit=120&prefixes=mdi,tabler,material-symbols,ph,simple-icons,game-icons,fluent`);
+  const r=await fetch(`${ICON_API}/search?query=${encodeURIComponent(translate(q))}&limit=150&prefixes=mdi,tabler,material-symbols,ph,simple-icons,game-icons,fluent-emoji-high-contrast,healthicons,fluent`);
   const j=await r.json();curCat='';drawCats();showIcons(j.icons||[]);
   $('iconHint').textContent=`Знайдено: ${(j.icons||[]).length}. Бренди: просто назва (apple, samsung, xiaomi).`;
  }catch(e){$('iconHint').textContent='Немає інтернету — доступні лише нещодавні іконки.'}
