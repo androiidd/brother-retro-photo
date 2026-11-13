@@ -356,6 +356,71 @@ $('pSave').addEventListener('click',()=>{if(!src){alert('Спочатку зав
 /* ===================== STICKER ===================== */
 const SC=$('sCanvas'),SX=SC.getContext('2d',{willReadFrequently:true});
 const ICON_API='https://api.iconify.design';
+/* ===== Власні іконки майстерні (вбудовані, працюють без інтернету) ===== */
+const MY=(()=>{
+ const S0='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+ const sv=b=>S0+b+'</svg>';
+ const P=(cx,cy,r,a)=>[(cx+r*Math.cos(a)).toFixed(2),(cy+r*Math.sin(a)).toFixed(2)].join(',');
+ function gear(cx,cy,ro,ri,n,hole){
+  let pts=[];const st=Math.PI*2/n;
+  for(let i=0;i<n;i++){const a=i*st;
+   pts.push(P(cx,cy,ri,a-st*.5),P(cx,cy,ro,a-st*.22),P(cx,cy,ro,a+st*.22),P(cx,cy,ri,a+st*.5))}
+  return `<path d="M${pts.join('L')}Z" fill="#000" stroke="none"/><circle cx="${cx}" cy="${cy}" r="${hole}" fill="#fff" stroke="none"/>`;
+ }
+ function star(cx,cy,ro,ri,n,rot=0){let p=[];for(let i=0;i<n*2;i++){const r=i%2?ri:ro,a=rot+i*Math.PI/n;p.push(P(cx,cy,r,a))}return 'M'+p.join('L')+'Z'}
+ const I={
+  trackpad:['трекпад тачпад trackpad touchpad',sv('<rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M12 9v4"/><path d="M10 11l2-2 2 2"/><circle cx="12" cy="15" r="1" fill="#000"/>')],
+  trackpad2:['трекпад тачпад trackpad скрол жести gestures',sv('<rect x="2.5" y="4" width="19" height="16" rx="2.5"/><circle cx="9.5" cy="12" r="1.7" fill="#000"/><circle cx="14.5" cy="12" r="1.7" fill="#000"/><path d="M12 6.5v1.5M10.8 7.2L12 6l1.2 1.2M12 17.5V16M10.8 16.8L12 18l1.2-1.2" stroke-width="1.5"/>')],
+  macbook:['макбук ноутбук macbook laptop',sv('<rect x="4" y="4" width="16" height="11" rx="1.2"/><path d="M1.5 18h21l-1 2h-19z" fill="#000"/><path d="M10 18h4"/>')],
+  macopen:['макбук розібраний корпус нижня кришка macbook bottom case',sv('<path d="M3 9h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="5" y="11" width="6" height="6" rx=".6"/><rect x="13" y="11" width="6" height="2.5" rx=".6"/><rect x="13" y="14.5" width="6" height="2.5" rx=".6"/><path d="M3 9l2-4h14l2 4"/>')],
+  keycap:['кнопка клавіша кейкап keycap key',sv('<rect x="3" y="3" width="18" height="18" rx="3"/><rect x="6.5" y="5.5" width="11" height="10" rx="1.5"/><path d="M10 9.5h4"/>')],
+  keyboard:['клавіатура keyboard',sv('<rect x="1.5" y="6" width="21" height="12" rx="2"/><path d="M5 9.5h.01M8 9.5h.01M11 9.5h.01M14 9.5h.01M17 9.5h.01M19 9.5h.01M6 12.5h.01M9 12.5h.01M12 12.5h.01M15 12.5h.01M18 12.5h.01M7 15.5h10" stroke-width="2.4"/>')],
+  topcase:['топкейс топ кейс клавіатура підсвітка topcase',sv('<rect x="2" y="3" width="20" height="18" rx="1.5"/><rect x="4" y="5" width="16" height="7" rx="1"/><path d="M6 7.5h.01M9 7.5h.01M12 7.5h.01M15 7.5h.01M18 7.5h.01M7 10h10" stroke-width="2"/><rect x="7.5" y="14" width="9" height="5" rx="1"/>')],
+  cmd:['command cmd команда клавіша мак',sv('<path d="M9 6v12M15 6v12M6 9h12M6 15h12"/><path d="M9 6a3 3 0 1 0-3 3M15 6a3 3 0 1 1 3 3M9 18a3 3 0 1 1-3-3M15 18a3 3 0 1 0 3-3"/>')],
+  flex:['шлейф шлейфи flex cable ffc fpc',sv('<rect x="1.5" y="15" width="6" height="6" rx="1" fill="#000"/><path d="M3 15v-3a6 6 0 0 1 6-6h12.5"/><path d="M6 15v-3a3 3 0 0 1 3-3h12.5"/><path d="M21.5 4v7"/>')],
+  flex2:['шлейф ffc стрічковий кабель ribbon flex',sv('<rect x="1.5" y="8" width="4" height="8" rx=".5" fill="#000"/><rect x="18.5" y="8" width="4" height="8" rx=".5" fill="#000"/><path d="M5.5 9.5h13M5.5 12h13M5.5 14.5h13" stroke-width="1.5"/>')],
+  zif:['конектор роз\'єм zif ffc connector',sv('<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M5 11v2M8 11v2M11 11v2M14 11v2M17 11v2M20 11v2" stroke-width="1.6"/><path d="M2 18h20" stroke-width="2.5"/>')],
+  battery:['акумулятор батарея macbook battery cells',sv('<rect x="2" y="5" width="20" height="14" rx="1.5"/><path d="M8.7 5v14M15.3 5v14"/><path d="M4.5 12h1.8M18 11.1v1.8M17.1 12h1.8"/>')],
+  ssd:['ssd m.2 диск накопичувач',sv('<path d="M2 8h17v8H2z"/><path d="M19 8h3v8h-3"/><path d="M19 10.5h1.5v3H19"/><rect x="4" y="10" width="4" height="4" fill="#000" stroke="none"/><rect x="10" y="10" width="6" height="4" fill="#000" stroke="none"/>')],
+  ram:['оперативна память ram memory',sv('<rect x="2" y="7" width="20" height="9" rx="1"/><path d="M5 16v3M8 16v3M11 16v3M14 16v3M17 16v3M20 16v3" stroke-width="1.6"/><rect x="4.5" y="9.5" width="3" height="4" fill="#000" stroke="none"/><rect x="10.5" y="9.5" width="3" height="4" fill="#000" stroke="none"/><rect x="16.5" y="9.5" width="3" height="4" fill="#000" stroke="none"/>')],
+  fan:['кулер вентилятор fan',sv('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2" fill="#000"/><path d="M12 10c-1-3 0-5 3-5.5M14 12.5c3-.5 4.5 1 4 4M10.5 13.5c-1.8 2.5-4 2.8-6 .8"/>')],
+  heatsink:['радіатор охолодження теплотрубка heatsink',sv('<path d="M3 20h18"/><path d="M5 20V8M9 20V5M13 20V8M17 20V5M21 20V8"/><path d="M3 15h18" stroke-width="1.5"/>')],
+  hinge:['петля петлі шарнір hinge',sv('<rect x="2" y="9" width="7" height="6" rx="1"/><rect x="15" y="9" width="7" height="6" rx="1"/><rect x="8" y="7.5" width="8" height="9" rx="4" fill="#000"/>')],
+  display:['дисплей матриця екран display lcd panel',sv('<rect x="2" y="3" width="20" height="14" rx="1.5"/><path d="M6 13l5-6M10 13l3-4" /><path d="M9 21h6M12 17v4"/>')],
+  usbc:['usb-c роз\'єм порт зарядка magsafe port',sv('<rect x="2" y="8" width="20" height="8" rx="4"/><rect x="6" y="11" width="12" height="2" rx="1" fill="#000"/>')],
+  magsafe:['magsafe зарядка роз\'єм',sv('<rect x="3" y="7" width="18" height="10" rx="5"/><path d="M7.5 12h.01M10 12h.01M12 12h.01M14 12h.01M16.5 12h.01" stroke-width="2.6"/>')],
+  board:['плата материнська logic board pcb',sv('<rect x="2" y="4" width="20" height="16" rx="1.5"/><rect x="8" y="8" width="7" height="7" fill="#000" stroke="none"/><path d="M5 7h.01M5 17h.01M19 7h.01M19 17h.01M15 11.5h4M5 11.5h3M11.5 15v5"/>')],
+  chip:['чіп мікросхема процесор chip ic',sv('<rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v4M12 2v4M15 2v4M9 18v4M12 18v4M15 18v4M2 9h4M2 12h4M2 15h4M18 9h4M18 12h4M18 15h4"/><circle cx="9" cy="9" r=".8" fill="#000"/>')],
+  screw:['гвинт гвинтик болт screw',sv('<path d="M5 3h14l-2 4H7z" fill="#000"/><path d="M9 7v11l3 3 3-3V7"/><path d="M9 10l6-1.5M9 13l6-1.5M9 16l6-1.5"/>')],
+  pentalobe:['пенталоб гвинт pentalobe screw',sv('<circle cx="12" cy="12" r="10"/>'+[0,1,2,3,4].map(i=>{const a=-Math.PI/2+i*2*Math.PI/5;return `<circle cx="${(12+3.6*Math.cos(a)).toFixed(2)}" cy="${(12+3.6*Math.sin(a)).toFixed(2)}" r="2.1" fill="#000" stroke="none"/>`}).join('')+'<circle cx="12" cy="12" r="2.6" fill="#000" stroke="none"/>')],
+  torx:['торкс гвинт torx star screw',sv('<circle cx="12" cy="12" r="10"/><path d="'+star(12,12,6.5,3.6,6,-Math.PI/2)+'" fill="#000" stroke="none"/>')],
+  phillips:['хрестовий гвинт phillips screw',sv('<circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12" stroke-width="3"/>')],
+  standoff:['стійка гайка standoff nut',sv('<path d="M12 2l8.7 5v10L12 22l-8.7-5V7z"/><circle cx="12" cy="12" r="4"/>')],
+  spring:['пружина spring',sv('<path d="M12 2v2"/><path d="M6 5.5l12 2-12 2.5 12 2.5-12 2.5 12 2.5-12 2"/><path d="M12 20v2"/>')],
+  gear:['шестерня шестерні зубчасте колесо gear cog',sv(gear(12,12,11,8.2,12,3.3))],
+  gear8:['шестерня мала gear small',sv(gear(12,12,10.5,7.2,8,3.2))],
+  gearbig:['шестерня велика багато зубів gear',sv(gear(12,12,11.3,9.4,20,4.5))],
+  gears:['шестерні механізм редуктор gears',sv(gear(8.5,9,7.6,5.6,10,2.1)+gear(17.2,17.2,6.2,4.6,8,1.8))],
+  geartrain:['шестерні редуктор привід зум gear train',sv(gear(6,12,5.6,4.2,8,1.6)+gear(13.4,8.3,4.3,3.2,7,1.3)+gear(18.8,15.3,4.9,3.7,8,1.5))],
+  worm:['черв\'ячна передача червяк worm gear',sv('<rect x="2" y="17" width="20" height="5" rx="2.5"/><path d="M5 17l2 5M9 17l2 5M13 17l2 5M17 17l2 5" stroke-width="1.5"/>'+gear(12,8.5,7.5,5.8,14,2))],
+  lens:['об\'єктив лінза lens objective',sv('<path d="M3 6h3v12H3z" fill="#000"/><path d="M6 7h10v10H6z"/><path d="M16 5h5v14h-5z"/><path d="M9 7v10M12 7v10" stroke-width="1.5"/><path d="M18.5 5v14" stroke-width="1.5"/>')],
+  lensfront:['лінза скло об\'єктив lens glass',sv('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6.5"/><path d="M9 8.5a4 4 0 0 1 3.5-1.3"/>')],
+  aperture:['діафрагма апертура aperture iris',sv('<circle cx="12" cy="12" r="10"/>'+[0,1,2,3,4,5].map(i=>{const a=i*Math.PI/3;return `<path d="M${P(12,12,10,a)}L${P(12,12,4,a+Math.PI*.66)}"/>`}).join(''))],
+  camera:['фотоапарат камера дзеркалка dslr camera',sv('<path d="M2 8a2 2 0 0 1 2-2h3l1.5-2.5h7L17 6h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4.2"/><circle cx="12" cy="13" r="1.6" fill="#000"/><path d="M18.5 9h.01" stroke-width="2.6"/>')],
+  filmcam:['плівковий фотоапарат retro film camera',sv('<rect x="2" y="7" width="20" height="13" rx="1.5"/><path d="M4 7V5h4v2M16 7V4.5h3V7"/><circle cx="12" cy="13.5" r="4"/><rect x="4" y="9.5" width="3" height="2" fill="#000" stroke="none"/>')],
+  mirrorless:['беззеркалка mirrorless камера',sv('<path d="M2 8h20v11H2z"/><path d="M3.5 8V6.5h4V8M15 8l1-2h3l1 2"/><circle cx="9.5" cy="13.5" r="4"/><circle cx="9.5" cy="13.5" r="1.5" fill="#000"/><rect x="16" y="11" width="4" height="2.6" rx=".5"/>')],
+  film:['плівка касета film roll 35mm',sv('<rect x="3" y="5" width="11" height="15" rx="2"/><path d="M6 3h5v2M6 20v1.5h5V20"/><path d="M14 8h7v9h-7"/><path d="M16 8v1.5M18.5 8v1.5M16 17v-1.5M18.5 17v-1.5" stroke-width="1.5"/>')],
+  filmstrip:['плівка кадри filmstrip negatives',sv('<rect x="2" y="3" width="20" height="18" rx="1.5"/><path d="M2 7h20M2 17h20"/><path d="M5 5h.01M9 5h.01M13 5h.01M17 5h.01M5 19h.01M9 19h.01M13 19h.01M17 19h.01" stroke-width="2.2"/><path d="M12 7v10"/>')],
+  shutter:['затвор шторка shutter',sv('<rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 7.5h18M3 12h18M3 16.5h18" stroke-width="1.6"/><path d="M21 6l2 0" />')],
+  flash:['спалах вспишка flash speedlight',sv('<rect x="5" y="2" width="14" height="7" rx="1"/><path d="M8 9h8l-1 4H9z"/><rect x="8.5" y="13" width="7" height="8" rx="1"/><path d="M12.5 3.5l-2 2.5h3l-2 2" stroke-width="1.4"/>')],
+  sensor:['матриця сенсор датчик image sensor',sv('<rect x="3" y="3" width="18" height="18" rx="1.5"/><rect x="7" y="7" width="10" height="10" fill="#000" stroke="none"/><path d="M3 7h1.5M3 12h1.5M3 17h1.5M19.5 7H21M19.5 12H21M19.5 17H21"/>')],
+  tripod:['штатив тринога tripod',sv('<rect x="8" y="2" width="8" height="5" rx="1"/><path d="M12 7v5M12 12l-7 10M12 12l7 10M12 12v10"/>')],
+  mount:['байонет кріплення lens mount bayonet',sv('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6.5"/><path d="M12 2v3M3.3 17l2.6-1.5M20.7 17l-2.6-1.5"/><circle cx="18" cy="7" r="1" fill="#000"/>')],
+  sdcard:['карта пам\'яті sd card',sv('<path d="M6 2h9l4 4v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M8 5v3M11 5v3M14 5v3"/>')],
+ };
+ const out={};for(const k in I)out['my:'+k]={kw:I[k][0],svg:I[k][1]};return out;
+})();
+
 const CATS={
  'Сервіс':['mdi:wrench','mdi:screwdriver','mdi:tools','mdi:hammer-wrench','mdi:soldering-iron','mdi:cog','mdi:magnify','mdi:clipboard-check','mdi:shield-check','mdi:clock-outline','mdi:check-circle','mdi:close-circle','mdi:package-variant-closed','mdi:truck-delivery','mdi:cash','mdi:account','mdi:phone','mdi:calendar','mdi:tag','mdi:archive'],
  'Пристрої':['mdi:cellphone','mdi:tablet','mdi:laptop','mdi:monitor','mdi:desktop-tower','mdi:watch','mdi:headphones','mdi:gamepad-variant','mdi:camera','mdi:printer','mdi:router-wireless','mdi:television','mdi:speaker','mdi:keyboard','mdi:mouse','mdi:quadcopter','mdi:robot-vacuum','mdi:microwave','mdi:washing-machine','mdi:car'],
@@ -364,18 +429,21 @@ const CATS={
  'Бренди':['simple-icons:apple','simple-icons:samsung','simple-icons:xiaomi','simple-icons:huawei','simple-icons:google','simple-icons:lenovo','simple-icons:asus','simple-icons:acer','simple-icons:hp','simple-icons:dell','simple-icons:sony','simple-icons:lg','simple-icons:oneplus','simple-icons:motorola','simple-icons:nokia','simple-icons:honor','simple-icons:oppo','simple-icons:vivo','simple-icons:playstation','simple-icons:nintendoswitch'],
  'Собаки':['fluent-emoji-high-contrast:dog-face','fluent-emoji-high-contrast:dog','fluent-emoji-high-contrast:poodle','fluent-emoji-high-contrast:guide-dog','fluent-emoji-high-contrast:service-dog','fluent-emoji-high-contrast:paw-prints','fluent-emoji-high-contrast:bone','fluent-emoji-high-contrast:hot-dog','mdi:dog','mdi:dog-side','mdi:dog-service','mdi:paw','mdi:bone','mdi:bowl-mix','tabler:dog','tabler:dog-bowl','tabler:paw','ph:dog','ph:paw-print','game-icons:sitting-dog','game-icons:labrador-head','game-icons:husky-head','game-icons:dog-house','game-icons:dog-bowl','game-icons:sniffing-dog','game-icons:jumping-dog','game-icons:poodle','game-icons:bulldog','game-icons:dachshund','game-icons:dog-bone'],
  'Приколи':['fluent-emoji-high-contrast:face-with-tears-of-joy','fluent-emoji-high-contrast:rolling-on-the-floor-laughing','fluent-emoji-high-contrast:smiling-face-with-sunglasses','fluent-emoji-high-contrast:winking-face-with-tongue','fluent-emoji-high-contrast:zany-face','fluent-emoji-high-contrast:exploding-head','fluent-emoji-high-contrast:face-screaming-in-fear','fluent-emoji-high-contrast:skull','fluent-emoji-high-contrast:pile-of-poo','fluent-emoji-high-contrast:clown-face','fluent-emoji-high-contrast:ghost','fluent-emoji-high-contrast:alien','fluent-emoji-high-contrast:robot','fluent-emoji-high-contrast:see-no-evil-monkey','fluent-emoji-high-contrast:unicorn','fluent-emoji-high-contrast:fire','fluent-emoji-high-contrast:bomb','fluent-emoji-high-contrast:party-popper','fluent-emoji-high-contrast:crown','fluent-emoji-high-contrast:thumbs-up','fluent-emoji-high-contrast:victory-hand','fluent-emoji-high-contrast:sign-of-the-horns','fluent-emoji-high-contrast:hot-beverage','fluent-emoji-high-contrast:beer-mug','fluent-emoji-high-contrast:pizza','fluent-emoji-high-contrast:rocket','fluent-emoji-high-contrast:cat-face','fluent-emoji-high-contrast:duck','fluent-emoji-high-contrast:sleeping-face','fluent-emoji-high-contrast:money-bag','mdi:emoticon-cool','mdi:emoticon-devil','mdi:emoticon-dead','mdi:ninja','mdi:pirate','mdi:skull-crossbones','mdi:coffee','mdi:sleep'],
+ 'MacBook':['my:macbook','my:macopen','my:trackpad','my:trackpad2','my:keyboard','my:topcase','my:keycap','my:cmd','my:flex','my:flex2','my:zif','my:battery','my:ssd','my:ram','my:board','my:chip','my:fan','my:heatsink','my:hinge','my:display','my:usbc','my:magsafe','my:pentalobe','my:torx','my:phillips','my:screw','my:standoff','simple-icons:apple','mdi:apple-keyboard-command','mdi:apple-keyboard-option','mdi:apple-keyboard-shift','mdi:apple-keyboard-control','mdi:laptop','mdi:keyboard-outline','mdi:gesture-tap','mdi:usb-c-port','mdi:expansion-card-variant','mdi:memory','mdi:harddisk','mdi:fan','tabler:device-laptop','tabler:keyboard','tabler:cpu','ph:laptop','ph:keyboard','ph:cpu','ph:circuitry','ph:hard-drives'],
+ 'Фототехніка':['my:camera','my:mirrorless','my:filmcam','my:lens','my:lensfront','my:aperture','my:mount','my:shutter','my:sensor','my:flash','my:film','my:filmstrip','my:tripod','my:sdcard','my:flex','my:gears','my:geartrain','my:spring','mdi:camera','mdi:camera-outline','mdi:camera-iris','mdi:aperture','mdi:camera-enhance','mdi:camera-timer','mdi:camera-gopro','mdi:film','mdi:filmstrip','mdi:flash','mdi:camera-flip','mdi:image-filter-hdr','tabler:aperture','tabler:camera','tabler:camera-selfie','tabler:movie','ph:aperture','ph:camera','ph:film-strip','ph:film-reel','game-icons:film-spool','game-icons:photo-camera'],
+ 'Механіка':['my:gear','my:gear8','my:gearbig','my:gears','my:geartrain','my:worm','my:spring','my:screw','my:pentalobe','my:torx','my:phillips','my:standoff','mdi:cog','mdi:cogs','mdi:cog-outline','mdi:screw-flat-top','mdi:screw-round-top','mdi:screw-machine-flat-top','mdi:screw-lag','mdi:nut','mdi:hexagon-outline','tabler:settings','tabler:screwdriver','tabler:tool','ph:gear-six','ph:gear-fine','ph:wrench','game-icons:gears','game-icons:cog','game-icons:spring','game-icons:screw','game-icons:auto-repair'],
  'Нещодавні':null
 };
 /* Простий перекладач для пошуку українською */
-const UA={'собака':'dog','пес':'dog','песик':'dog','цуцик':'puppy','лапа':'paw','кістка':'bone','будка':'dog house','миска':'bowl','кіт':'cat','кішка':'cat','сміх':'laugh','смішно':'laugh','череп':'skull','вогонь':'fire','кава':'coffee','пиво':'beer','піца':'pizza','серце':'heart','корона':'crown','ракета':'rocket','привид':'ghost','робот':'robot','батарея':'battery','акумулятор':'battery','екран':'screen','дисплей':'screen','телефон':'phone','ноутбук':'laptop','плата':'chip','чіп':'chip','гвинт':'screw','болт':'screw','викрутка':'screwdriver','паяльник':'soldering','кабель':'cable','зарядка':'charger','камера':'camera','динамік':'speaker','мікрофон':'microphone','кнопка':'button','вода':'water','обережно':'warning','увага':'warning','крихке':'fragile','гроші':'money','годинник':'clock','коробка':'box','замок':'lock','ключ':'key','стрілка':'arrow','зірка':'star','квітка':'flower','машина':'car','їжа':'food','качка':'duck','мавпа':'monkey','єдиноріг':'unicorn','сон':'sleep','спати':'sleep'};
+const UA={'собака':'dog','пес':'dog','песик':'dog','цуцик':'puppy','лапа':'paw','кістка':'bone','будка':'dog house','миска':'bowl','кіт':'cat','кішка':'cat','сміх':'laugh','смішно':'laugh','череп':'skull','вогонь':'fire','кава':'coffee','пиво':'beer','піца':'pizza','серце':'heart','корона':'crown','ракета':'rocket','привид':'ghost','робот':'robot','батарея':'battery','акумулятор':'battery','екран':'screen','дисплей':'screen','телефон':'phone','ноутбук':'laptop','плата':'chip','чіп':'chip','гвинт':'screw','болт':'screw','викрутка':'screwdriver','паяльник':'soldering','кабель':'cable','зарядка':'charger','камера':'camera','динамік':'speaker','мікрофон':'microphone','кнопка':'button','вода':'water','обережно':'warning','увага':'warning','крихке':'fragile','гроші':'money','годинник':'clock','коробка':'box','замок':'lock','ключ':'key','стрілка':'arrow','зірка':'star','квітка':'flower','машина':'car','їжа':'food','качка':'duck','мавпа':'monkey','єдиноріг':'unicorn','сон':'sleep','спати':'sleep','трекпад':'trackpad','тачпад':'touchpad','клавіатура':'keyboard','шлейф':'cable','шестерня':'gear','шестерні':'gear','гвинтик':'screw','пружина':'spring','обʼєктив':'lens','об\'єктив':'lens','обєктив':'lens','лінза':'lens','затвор':'shutter','діафрагма':'aperture','плівка':'film','спалах':'flash','фотоапарат':'camera','кулер':'fan','вентилятор':'fan','память':'memory','пам\'ять':'memory','диск':'disk','матриця':'display','макбук':'laptop','мак':'apple','штатив':'tripod','петля':'hinge','порт':'usb'};
 const translate=q=>q.toLowerCase().split(/\s+/).map(w=>UA[w]||w).join(' ');
-const iconUrl=n=>{const[p,i]=n.split(':');return `${ICON_API}/${p}/${i}.svg?height=512&color=%23000`};
+const iconUrl=n=>{if(MY[n])return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(MY[n].svg);const[p,i]=n.split(':');return `${ICON_API}/${p}/${i}.svg?height=512&color=%23000`};
 const iconCache=new Map();
 function loadIcon(name){
  if(!name)return Promise.resolve(null);
  if(iconCache.has(name))return iconCache.get(name);
  const pr=(async()=>{
-  let svg=store.get('svg:'+name,null);
+  let svg=MY[name]?MY[name].svg.replace('viewBox','width="512" height="512" viewBox'):store.get('svg:'+name,null);
   if(!svg){const r=await fetch(iconUrl(name));if(!r.ok)throw new Error('icon');svg=await r.text();store.set('svg:'+name,svg)}
   const im=new Image();im.src=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   await im.decode();return im;
@@ -433,11 +501,12 @@ $('sSearch').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(search
 async function search(){
  const q=$('sSearch').value.trim();if(!q){showIcons(curCat==='Нещодавні'?recent():(CATS[curCat]||CATS['Сервіс']));return}
  $('iconHint').textContent='Шукаю…';
+ const ql=q.toLowerCase(),myHits=Object.keys(MY).filter(k=>MY[k].kw.split(' ').some(w=>w.startsWith(ql)||ql.split(/\s+/).some(t=>t.length>2&&w.startsWith(t))));
  try{
   const r=await fetch(`${ICON_API}/search?query=${encodeURIComponent(translate(q))}&limit=150&prefixes=mdi,tabler,material-symbols,ph,simple-icons,game-icons,fluent-emoji-high-contrast,healthicons,fluent`);
-  const j=await r.json();curCat='';drawCats();showIcons(j.icons||[]);
-  $('iconHint').textContent=`Знайдено: ${(j.icons||[]).length}. Бренди: просто назва (apple, samsung, xiaomi).`;
- }catch(e){$('iconHint').textContent='Немає інтернету — доступні лише нещодавні іконки.'}
+  const j=await r.json();const all=[...myHits,...(j.icons||[])];curCat='';drawCats();showIcons(all);
+  $('iconHint').textContent=`Знайдено: ${all.length}. Бренди: просто назва (apple, samsung, xiaomi).`;
+ }catch(e){curCat='';drawCats();showIcons(myHits,'Немає інтернету — доступні вбудовані та нещодавні іконки.');$('iconHint').textContent='Немає інтернету — показано лише вбудовані іконки.'}
 }
 
 /* --- текст --- */
@@ -476,7 +545,9 @@ function drawQR(ctx,text,x,y,size,fg){
  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))ctx.fillRect(x+off+c*cell,y+off+r*cell,cell,cell);
 }
 
+let renderId=0;
 async function renderSticker(){
+ const myId=++renderId;
  const t=TAPES[S.tape];
  let pw=t.w,pl=t.h||mm2px(+S.len);               // поперек стрічки × вздовж
  const along=S.orient==='along';
@@ -487,6 +558,7 @@ async function renderSticker(){
  try{await Promise.all([document.fonts.load(`${WEIGHT[font]} 40px "${font}"`,'АаЇї'),document.fonts.load(`${SUBW[font]} 40px "${font}"`,'АаЇї')])}catch(e){}
  let iconImg=null;
  if(S.icon&&S.layout!=='text'){try{iconImg=await loadIcon(S.icon)}catch(e){$('sStatus').textContent='Іконка не завантажилась (немає інтернету?)'}}
+ if(myId!==renderId)return; // поки чекали шрифти/іконку, вже почався новіший рендер
 
  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
  x.fillStyle=bg;x.fillRect(0,0,W,H);
