@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Brother Print">
 <meta name="theme-color" content="#111111">
 <title>Brother Print Studio</title>
@@ -58,7 +56,7 @@ canvas{max-width:100%;max-height:60vh;display:block;background:#fff;image-render
   html,body{margin:0!important;padding:0!important;background:#fff}
   header,.app{display:none!important}
   #printArea{display:block}
-  #printArea img{display:block;width:100%;height:auto;image-rendering:pixelated}
+  #printArea img,#printArea canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
 }
 </style>
 <style id="pageStyle"></style>
@@ -218,6 +216,21 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 }));
 
 /* ---------- Print & share (спільне) ---------- */
+/* PNG готується заздалегідь після кожної зміни, щоб «Поділитися/Друк» відкривались миттєво
+   (iOS дозволяє меню лише одразу після натискання, без затримок) */
+function cacheBlob(cv){cv._blob=null;cv.toBlob(b=>{cv._blob=b},'image/png')}
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function printOrShare(cv,tapeMm,name,statusEl){
+ if(isIOS&&cv._blob&&navigator.canShare){
+  const file=new File([cv._blob],name,{type:'image/png'});
+  if(navigator.canShare({files:[file]})){
+   navigator.share({files:[file]}).then(()=>statusEl.textContent='Готово ✓').catch(e=>{if(e.name!=='AbortError')statusEl.textContent='Не вдалося: '+e.message});
+   statusEl.textContent='У меню виберіть «Друк» або iPrint&Label';
+   return;
+  }
+ }
+ printCanvas(cv,tapeMm);
+}
 function printCanvas(cv,tapeMm){
  const hMm=(tapeMm*cv.height/cv.width).toFixed(2);
  $('pageStyle').textContent=`@media print{@page{size:${tapeMm}mm ${hMm}mm;margin:0}}`;
@@ -228,16 +241,16 @@ function printCanvas(cv,tapeMm){
  window.print();
 }
 function shareCanvas(cv,name,statusEl){
- cv.toBlob(async blob=>{
-  if(!blob){alert('Не вдалося створити PNG.');return}
-  const file=new File([blob],name,{type:'image/png'});
-  try{
-   if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});statusEl.textContent='Готово ✓';return}
-  }catch(e){if(e.name==='AbortError')return}
-  const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);statusEl.textContent='PNG готовий ✓';
- },'image/png');
+ const blob=cv._blob;
+ if(!blob){statusEl.textContent='Зачекайте секунду і натисніть ще раз';cacheBlob(cv);return}
+ const file=new File([blob],name,{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){
+  navigator.share({files:[file]}).then(()=>statusEl.textContent='Готово ✓').catch(e=>{if(e.name!=='AbortError')statusEl.textContent='Не вдалося: '+e.message});
+  return;
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);statusEl.textContent='PNG готовий ✓';
 }
 
 /* ===================== PHOTO ===================== */
@@ -334,10 +347,10 @@ function render(){
  const sx2=small.getContext('2d'),out=sx2.createImageData(w,h);
  for(let i=0;i<w*h;i++){const v=a[i]<128?0:255;out.data[i*4]=out.data[i*4+1]=out.data[i*4+2]=v;out.data[i*4+3]=255}
  sx2.putImageData(out,0,0);
- PC.width=W;PC.height=H;PX.imageSmoothingEnabled=false;PX.drawImage(small,0,0,W,H);
+ PC.width=W;PC.height=H;PX.imageSmoothingEnabled=false;PX.drawImage(small,0,0,W,H);cacheBlob(PC);
  $('pMeta').textContent=`${W}×${H} px · ${tape.mm}×${(H/DPI*25.4).toFixed(0)} мм`;
 }
-$('pPrint').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}printCanvas(PC,TAPES[$('pTape').value].mm)});
+$('pPrint').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}printOrShare(PC,TAPES[$('pTape').value].mm,'brother-photo.png',$('status'))});
 $('pSave').addEventListener('click',()=>{if(!src){alert('Спочатку завантаж фото.');return}shareCanvas(PC,'brother-photo.png',$('status'))});
 
 /* ===================== STICKER ===================== */
@@ -527,6 +540,7 @@ async function renderSticker(){
  if(along){SC.width=H;SC.height=W;SX.save();SX.translate(H,0);SX.rotate(Math.PI/2);SX.drawImage(c,0,0);SX.restore();
   SC.style.transform='';}
  else{SC.width=W;SC.height=H;SX.drawImage(c,0,0)}
+ cacheBlob(SC);
  // превʼю показуємо в тому вигляді, як читатиметься
  previewCanvas(c);
  $('sMeta').textContent=`${t.mm}×${(pl/DPI*25.4).toFixed(0)} мм · ${pw}×${pl} px`;
@@ -537,7 +551,7 @@ function previewCanvas(c){
  if(!PV){PV=document.createElement('canvas');SC.after(PV);SC.style.display='none'}
  PV.width=c.width;PV.height=c.height;PV.getContext('2d').drawImage(c,0,0);
 }
-$('sPrint').addEventListener('click',()=>printCanvas(SC,TAPES[S.tape].mm));
+$('sPrint').addEventListener('click',()=>printOrShare(SC,TAPES[S.tape].mm,'brother-sticker.png',$('sStatus')));
 $('sSave').addEventListener('click',()=>shareCanvas(SC,'brother-sticker.png',$('sStatus')));
 
 /* ---------- init ---------- */
